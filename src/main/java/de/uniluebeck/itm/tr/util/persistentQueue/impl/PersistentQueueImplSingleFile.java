@@ -21,11 +21,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                *
  **********************************************************************************************************************/
 
-package de.uniluebeck.itm.tr.util.persistentQueue.impl;
+package de.uniluebeck.itm.tr.util.persistentqueue.impl;
 
-import de.uniluebeck.itm.tr.util.persistentQueue.LongOverflowException;
-import de.uniluebeck.itm.tr.util.persistentQueue.NotEnoughMemoryException;
-import de.uniluebeck.itm.tr.util.persistentQueue.PersistentQueue;
+import de.uniluebeck.itm.tr.util.persistentqueue.LongOverflowException;
+import de.uniluebeck.itm.tr.util.persistentqueue.NotEnoughMemoryException;
+import de.uniluebeck.itm.tr.util.persistentqueue.PersistentQueue;
 
 import java.io.File;
 import java.io.FileInputStream;

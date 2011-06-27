@@ -1,4 +1,4 @@
-package de.uniluebeck.itm.tr.util.persistentQueue.impl;
+package de.uniluebeck.itm.tr.util.persistentqueue.impl;
 
 import java.io.Serializable;
 

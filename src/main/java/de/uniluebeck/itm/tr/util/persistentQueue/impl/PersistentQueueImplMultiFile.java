@@ -21,19 +21,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                *
  **********************************************************************************************************************/
 
-package de.uniluebeck.itm.tr.util.persistentQueue.impl;
+package de.uniluebeck.itm.tr.util.persistentqueue.impl;
 
 import java.io.*;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import de.uniluebeck.itm.tr.util.persistentQueue.LongOverflowException;
-import de.uniluebeck.itm.tr.util.persistentQueue.NotEnoughMemoryException;
-import de.uniluebeck.itm.tr.util.persistentQueue.PersistentQueue;
+import de.uniluebeck.itm.tr.util.persistentqueue.LongOverflowException;
+import de.uniluebeck.itm.tr.util.persistentqueue.NotEnoughMemoryException;
+import de.uniluebeck.itm.tr.util.persistentqueue.PersistentQueue;
 import de.uniluebeck.itm.tr.util.FileUtils;
 import org.slf4j.LoggerFactory;
-import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
 
 public class PersistentQueueImplMultiFile implements PersistentQueue {
 

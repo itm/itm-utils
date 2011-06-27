@@ -21,7 +21,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                *
  **********************************************************************************************************************/
 
-package de.uniluebeck.itm.tr.util.persistentBlockingQueue;
+package de.uniluebeck.itm.tr.util.persistentblockingqueue;
 
 import java.util.Collection;
 import java.util.Iterator;

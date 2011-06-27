@@ -1,45 +1,19 @@
 package de.uniluebeck.itm.tr.util;
 
-import de.uniluebeck.itm.tr.util.RateLimiter;
-import de.uniluebeck.itm.tr.util.RateLimiterImpl;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RateLimiterUnitTest {
-	RateLimiter rateLimiter;
-	int slotLength = 2;
-	TimeUnit timeUnit = TimeUnit.SECONDS;
 
-	private class RateLimiterCheckApprovedRunnable implements Runnable {
-		private RateLimiter rateLimiter;
+	private RateLimiter rateLimiter;
 
-		public RateLimiterCheckApprovedRunnable(RateLimiter rateLimiter){
-			this.rateLimiter = rateLimiter;
-		}
-		@Override
-		public void run() {
-			assertTrue(rateLimiter.checkIfInSlotAndCount());
-		}
-	}
-	private class RateLimiterCheckDismissedRunnable implements Runnable {
-		private RateLimiter rateLimiter;
+	private int slotLength = 2;
 
-		public RateLimiterCheckDismissedRunnable(RateLimiter rateLimiter){
-			this.rateLimiter = rateLimiter;
-		}
-		@Override
-		public void run() {
-			assertFalse(rateLimiter.checkIfInSlotAndCount());
-		}
-	}
+	private TimeUnit timeUnit = TimeUnit.SECONDS;
 
 	@Test
 	public void checkIfAllPassedObjectsSuccessfullyApprovedInOneSlot() {
@@ -84,22 +58,4 @@ public class RateLimiterUnitTest {
 		}
 	}
 
-//	@Test
-//	public void checkThreadSafetyOfRateLimiter() throws Exception {
-//		ExecutorService executorService = Executors.newFixedThreadPool(4);
-//		rateLimiter = new RateLimiterImpl(10, 2, timeUnit);
-//		List<Future> futures = new ArrayList<Future>();
-//		for (int i = 0; i < 10; i++) {
-//			futures.add(executorService.submit(new RateLimiterCheckApprovedRunnable(rateLimiter)));
-//		}
-//		for (int i = 0; i < 10; i++) {
-//			futures.add(executorService.submit(new RateLimiterCheckDismissedRunnable(rateLimiter)));
-//		}
-//		for (Future future : futures){
-//			Object obj = future.get();
-//			assertNull(obj);
-//		}
-//		assertEquals(rateLimiter.approvedCount(), 10);
-//		assertEquals(rateLimiter.dismissedCount(), 10);		
-//	}
 }

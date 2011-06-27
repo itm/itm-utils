@@ -21,7 +21,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                                *
  **********************************************************************************************************************/
 
-package de.uniluebeck.itm.tr.util.persistentQueue;
+package de.uniluebeck.itm.tr.util.persistentqueue;
 
-public class NotEnoughMemoryException extends Throwable {
+public class NotEnoughMemoryException extends Exception {
 }
