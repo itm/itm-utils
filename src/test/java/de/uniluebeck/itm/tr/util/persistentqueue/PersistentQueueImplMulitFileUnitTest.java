@@ -1,4 +1,6 @@
-import de.uniluebeck.itm.tr.util.persistentQueue.impl.PersistentQueueImplMultiFile;
+package de.uniluebeck.itm.tr.util.persistentqueue;
+
+import de.uniluebeck.itm.tr.util.persistentqueue.impl.PersistentQueueImplMultiFile;
 
 import java.io.IOException;
 

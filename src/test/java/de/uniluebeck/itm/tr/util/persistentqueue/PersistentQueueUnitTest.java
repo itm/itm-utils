@@ -1,8 +1,7 @@
-import de.uniluebeck.itm.tr.util.persistentQueue.LongOverflowException;
-import de.uniluebeck.itm.tr.util.persistentQueue.NotEnoughMemoryException;
-import de.uniluebeck.itm.tr.util.persistentQueue.PersistentQueue;
-import de.uniluebeck.itm.tr.util.persistentQueue.impl.PersistentQueueImplMultiFile;
-import de.uniluebeck.itm.tr.util.persistentQueue.impl.PersistentQueueImplSingleFile;
+package de.uniluebeck.itm.tr.util.persistentqueue;
+
+import de.uniluebeck.itm.tr.util.persistentqueue.impl.PersistentQueueImplMultiFile;
+import de.uniluebeck.itm.tr.util.persistentqueue.impl.PersistentQueueImplSingleFile;
 import org.junit.Test;
 
 import java.io.IOException;

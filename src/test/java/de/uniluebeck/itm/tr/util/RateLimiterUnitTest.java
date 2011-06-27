@@ -1,3 +1,5 @@
+package de.uniluebeck.itm.tr.util;
+
 import de.uniluebeck.itm.tr.util.RateLimiter;
 import de.uniluebeck.itm.tr.util.RateLimiterImpl;
 import org.junit.Test;
