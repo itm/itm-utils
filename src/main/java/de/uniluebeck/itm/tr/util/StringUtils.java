@@ -39,6 +39,7 @@ import javax.xml.bind.Marshaller;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 
+@SuppressWarnings("unused")
 public class StringUtils {
 
     public static final Function<String, String> STRING_TO_LOWER_CASE = new Function<String, String>() {
