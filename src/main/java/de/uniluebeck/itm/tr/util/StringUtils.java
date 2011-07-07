@@ -247,7 +247,7 @@ public class StringUtils {
 	 * Same as calling {@link StringUtils#replaceNonPrintableAsciiCharacters(String)} with argument {@code new
 	 * String(bytes, 0, bytes.length)}.
 	 *
-	 * @param bytes the byte array to transfer to a string and replace non-printable characters in
+	 * @param bytes  the byte array to transfer to a string and replace non-printable characters in
 	 * @param offset the offset in {@code bytes} from which to start constructing the string
 	 * @param length the number of bytes to use for constructing the string
 	 *
@@ -329,6 +329,44 @@ public class StringUtils {
 		}
 
 		return toHexString(reverse);
+	}
+
+	/**
+	 * Same as calling {@code toPrintableString(buffer, Integer.MAX_VALUE)}.
+	 *
+	 * @param bytes the bytes to convert
+	 *
+	 * @return a printable String
+	 */
+	public static String toPrintableString(final byte[] bytes) {
+		return toPrintableString(bytes, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Returns a printable (ASCII) String by constructing a new String of maximum length {@code maxLength} and calling
+	 * {@link StringUtils#replaceNonPrintableAsciiCharacters(String)} on it.
+	 *
+	 * @param bytes	 the buffer to convert
+	 * @param maxLength the maximum length of the input String for {@link StringUtils#replaceNonPrintableAsciiCharacters(String)}
+	 *
+	 * @return a printable String
+	 */
+	public static String toPrintableString(final byte[] bytes, int maxLength) {
+		final int length = bytes.length < maxLength ? bytes.length : maxLength;
+		return replaceNonPrintableAsciiCharacters(new String(bytes, 0, length));
+	}
+
+	/**
+	 * "Alias" for {@link StringUtils#replaceNonPrintableAsciiCharacters(byte[], int, int)}.
+	 *
+	 * @param bytes  the bytes to convert to a printable String
+	 * @param offset the offset in {@code bytes} to start from
+	 * @param length the number of bytes in {@code bytes} to copy
+	 *
+	 * @return a printable String
+	 */
+	public static String toPrintableString(final byte[] bytes, int offset, int length) {
+		return replaceNonPrintableAsciiCharacters(bytes, offset, length);
 	}
 
 	public static String toString(short[] l, int offset, int length) {
