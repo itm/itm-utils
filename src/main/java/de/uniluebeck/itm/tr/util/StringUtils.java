@@ -56,6 +56,138 @@ public class StringUtils {
 	};
 
 	/**
+	 * Asserts that the given String {@code value} is a URN that has a suffix which can be parsed as a long value,
+	 * either hex-encoded (starting with 0x) or decimal-encoded.
+	 *
+	 * @param value the string to check
+	 *
+	 * @throws RuntimeException if suffix can not be parse as long value
+	 */
+	public static void assertHexOrDecLongUrnSuffix(String value) throws RuntimeException {
+		if (!StringUtils.hasHexOrDecLongUrnSuffix(value)) {
+			throw new RuntimeException("Suffix of {" + value + "} has to be an integer-value!");
+		}
+	}
+
+	public static boolean assertHexOrDecLongValue(String value) {
+		try {
+			parseHexOrDecLong(value);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Construct a byte[] from an input string delimited by spaces. Supported Prefixes are "0x" (hexadecimal) and "0b"
+	 * (binary), otherwise base 10 (decimal) is assumed. Example: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
+	 *
+	 * @param in The string to parse
+	 *
+	 * @return a byte array
+	 */
+	public static byte[] fromStringToByteArray(String in) {
+		Iterable<String> splitMessage = Splitter.on(" ").omitEmptyStrings().split(in);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+		for (String current : splitMessage) {
+			outputStream.write((byte) fromStringToLong(current));
+		}
+
+		return outputStream.toByteArray();
+	}
+
+	/**
+	 * Construct a byte from an input string Supported Prefixes are "0x" (hexadecimal) and "0b" (binary), otherwise base
+	 * 10 (decimal) is assumed. Examples: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
+	 *
+	 * @param in The string to parse
+	 *
+	 * @return a byte
+	 */
+	public static long fromStringToLong(String in) {
+		int type = 10;
+
+		if (in.startsWith("0x")) {
+			type = 16;
+			in = in.replace("0x", "");
+
+		} else if (in.startsWith("0b")) {
+			type = 2;
+			in = in.replace("0b", "");
+		}
+
+		BigInteger b = new BigInteger(in, type);
+		return b.longValue();
+	}
+
+	private static String getPrefixAsStringFromStringArray(String[] value) {
+		StringBuilder result = new StringBuilder();
+		if (value.length > 0) {
+			result.append(value[0]);
+			for (int i = 1; i < value.length - 1; i++) {
+				result.append(":");
+				result.append(value[i]);
+			}
+		}
+		return result.toString();
+	}
+
+	public static String getUrnSuffix(String urn) {
+		String[] arr = urn.split(":");
+		return arr[arr.length - 1];
+	}
+
+	public static boolean hasHexOrDecLongUrnSuffix(String value) {
+		String[] arr = value.split(":");
+		String suffix = arr[arr.length - 1];
+		return assertHexOrDecLongValue(suffix);
+	}
+
+	public static String jaxbMarshal(Object jaxbObject) {
+		StringWriter writer = new StringWriter();
+		if (jaxbObject instanceof Collection) {
+			for (Object o : (Collection) jaxbObject) {
+				JAXB.marshal(o, writer);
+				writer.append("\n");
+			}
+		} else {
+			JAXB.marshal(jaxbObject, writer);
+		}
+		return writer.toString();
+	}
+
+	public static String jaxbMarshalFragment(Object jaxbObject) throws JAXBException {
+		JAXBContext jc = JAXBContext.newInstance(jaxbObject.getClass().getPackage().getName());
+		Marshaller marshaller = jc.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
+		StringWriter writer = new StringWriter();
+		marshaller.marshal(jaxbObject, writer);
+		return writer.toString();
+	}
+
+	public static Long parseHexOrDecLong(String value) {
+		return value.startsWith("0x") ? Long.parseLong(value.substring(2), 16) : Long.parseLong(value, 10);
+	}
+
+	public static Long parseHexOrDecLongFromUrn(String urn) {
+		String[] arr = urn.split(":");
+		String suffix = arr[arr.length - 1];
+		return parseHexOrDecLong(suffix);
+	}
+
+	public static String parseHexOrDecLongUrnSuffix(String value) {
+		String[] valueAsArray = value.split(":");
+		String suffix = valueAsArray[valueAsArray.length - 1];
+		return getPrefixAsStringFromStringArray(valueAsArray) + ":"
+				+ (suffix.startsWith("0x") ? Long.parseLong(suffix.substring(2), 16) : Long.parseLong(suffix, 10));
+	}
+
+	public static List<String> parseLines(String str) {
+		return Arrays.asList(str.split("[\\r\\n]+"));
+	}
+
+	/**
 	 * Replaces the non-printable ASCII characters with readable counterparts in square brackets, e.g. \0x00 -> [NUL].
 	 *
 	 * @param str the String in which to replace the characters
@@ -99,26 +231,25 @@ public class StringUtils {
 				.replaceAll("\\x7f", "[DEL]");
 	}
 
-	public static String jaxbMarshal(Object jaxbObject) {
-		StringWriter writer = new StringWriter();
-		if (jaxbObject instanceof Collection) {
-			for (Object o : (Collection) jaxbObject) {
-				JAXB.marshal(o, writer);
-				writer.append("\n");
-			}
-		} else {
-			JAXB.marshal(jaxbObject, writer);
-		}
-		return writer.toString();
-	}
+	public static String toASCIIString(byte[] tmp) {
+		StringBuilder sb = new StringBuilder("");
 
-	public static String jaxbMarshalFragment(Object jaxbObject) throws JAXBException {
-		JAXBContext jc = JAXBContext.newInstance(jaxbObject.getClass().getPackage().getName());
-		Marshaller marshaller = jc.createMarshaller();
-		marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-		StringWriter writer = new StringWriter();
-		marshaller.marshal(jaxbObject, writer);
-		return writer.toString();
+		for (byte b : tmp) {
+			switch (b) {
+				case 0x0D:
+					sb.append("<CR>");
+					break;
+				case 0x0A:
+					sb.append("<LF>");
+					break;
+				default:
+					char chr = (char) b;
+					sb.append(chr);
+					break;
+			}
+		}
+
+		return sb.toString();
 	}
 
 	public static String toHexString(char tmp) {
@@ -149,25 +280,29 @@ public class StringUtils {
 		return s.toString();
 	}
 
-	public static String toASCIIString(byte[] tmp) {
-		StringBuilder sb = new StringBuilder("");
+	public static String toHexString(int i) {
+		String tmp = "";
+		if (i > 0xFF) {
+			tmp += toHexString((byte) (i >> 8 & 0xFF)) + " ";
+		} else {
+			tmp += "    ";
+		}
+		tmp += toHexString((byte) (i & 0xFF));
+		return tmp;
+	}
 
-		for (byte b : tmp) {
-			switch (b) {
-				case 0x0D:
-					sb.append("<CR>");
-					break;
-				case 0x0A:
-					sb.append("<LF>");
-					break;
-				default:
-					char chr = (char) b;
-					sb.append(chr);
-					break;
-			}
+	public static String toHexStringReverseDirection(byte[] tmp) {
+		return toHexStringReverseDirection(tmp, 0, tmp.length);
+	}
+
+	public static String toHexStringReverseDirection(byte[] tmp, int offset, int length) {
+		byte reverse[] = new byte[length];
+
+		for (int i = 0; i < length; ++i) {
+			reverse[i] = tmp[offset + length - i - 1];
 		}
 
-		return sb.toString();
+		return toHexString(reverse);
 	}
 
 	public static String toString(short[] l, int offset, int length) {
@@ -198,147 +333,12 @@ public class StringUtils {
 		return b.toString().trim();
 	}
 
-	public static String toHexStringReverseDirection(byte[] tmp) {
-		return toHexStringReverseDirection(tmp, 0, tmp.length);
-	}
-
-	public static String toHexStringReverseDirection(byte[] tmp, int offset, int length) {
-		byte reverse[] = new byte[length];
-
-		for (int i = 0; i < length; ++i) {
-			reverse[i] = tmp[offset + length - i - 1];
-		}
-
-		return toHexString(reverse);
-	}
-
-	public static List<String> parseLines(String str) {
-		return Arrays.asList(str.split("[\\r\\n]+"));
-	}
-
 	public static String toString(Collection<?> list) {
 		if (list == null) {
 			return "null";
 		}
 
 		return Arrays.toString(list.toArray());
-	}
-
-	public static Long parseHexOrDecLong(String value) {
-		return value.startsWith("0x") ? Long.parseLong(value.substring(2), 16) : Long.parseLong(value, 10);
-	}
-
-	public static Long parseHexOrDecLongFromUrn(String urn) {
-		String[] arr = urn.split(":");
-		String suffix = arr[arr.length - 1];
-		return parseHexOrDecLong(suffix);
-	}
-
-	public static String parseHexOrDecLongUrnSuffix(String value) {
-		String[] valueAsArray = value.split(":");
-		String suffix = valueAsArray[valueAsArray.length - 1];
-		return getPrefixAsStringFromStringArray(valueAsArray) + ":"
-				+ (suffix.startsWith("0x") ? Long.parseLong(suffix.substring(2), 16) : Long.parseLong(suffix, 10));
-	}
-
-	private static String getPrefixAsStringFromStringArray(String[] value) {
-		StringBuilder result = new StringBuilder();
-		if (value.length > 0) {
-			result.append(value[0]);
-			for (int i = 1; i < value.length - 1; i++) {
-				result.append(":");
-				result.append(value[i]);
-			}
-		}
-		return result.toString();
-	}
-
-	public static boolean assertHexOrDecLongValue(String value) {
-		try {
-			parseHexOrDecLong(value);
-		} catch (NumberFormatException nfe) {
-			return false;
-		}
-		return true;
-	}
-
-	public static boolean hasHexOrDecLongUrnSuffix(String value) {
-		String[] arr = value.split(":");
-		String suffix = arr[arr.length - 1];
-		return assertHexOrDecLongValue(suffix);
-	}
-
-	/**
-	 * Asserts that the given String {@code value} is a URN that has a suffix which can be parsed as a long value,
-	 * either hex-encoded (starting with 0x) or decimal-encoded.
-	 *
-	 * @param value the string to check
-	 *
-	 * @throws RuntimeException if suffix can not be parse as long value
-	 */
-	public static void assertHexOrDecLongUrnSuffix(String value) throws RuntimeException {
-		if (!StringUtils.hasHexOrDecLongUrnSuffix(value)) {
-			throw new RuntimeException("Suffix of {" + value + "} has to be an integer-value!");
-		}
-	}
-
-	public static String getUrnSuffix(String urn) {
-		String[] arr = urn.split(":");
-		return arr[arr.length - 1];
-	}
-
-	public static String toHexString(int i) {
-		String tmp = "";
-		if (i > 0xFF) {
-			tmp += toHexString((byte) (i >> 8 & 0xFF)) + " ";
-		} else {
-			tmp += "    ";
-		}
-		tmp += toHexString((byte) (i & 0xFF));
-		return tmp;
-	}
-
-	/**
-	 * Construct a byte from an input string Supported Prefixes are "0x" (hexadecimal) and "0b" (binary), otherwise base
-	 * 10 (decimal) is assumed. Examples: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
-	 *
-	 * @param in The string to parse
-	 *
-	 * @return a byte
-	 */
-	public static long fromStringToLong(String in) {
-		int type = 10;
-
-		if (in.startsWith("0x")) {
-			type = 16;
-			in = in.replace("0x", "");
-
-		} else if (in.startsWith("0b")) {
-			type = 2;
-			in = in.replace("0b", "");
-		}
-
-		BigInteger b = new BigInteger(in, type);
-		return b.longValue();
-	}
-
-	/**
-	 * Construct a byte[] from an input string delimited by spaces. Supported Prefixes are "0x" (hexadecimal) and "0b"
-	 * (binary), otherwise base 10 (decimal) is assumed. Example: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
-	 *
-	 * @param in The string to parse
-	 *
-	 * @return a byte array
-	 */
-	public static byte[] fromStringToByteArray(String in) {
-		Iterable<String> splitMessage = Splitter.on(" ").omitEmptyStrings().split(in);
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-		for (String current : splitMessage) {
-			outputStream.write((byte) fromStringToLong(current));
-		}
-
-		return outputStream.toByteArray();
 	}
 
 }
