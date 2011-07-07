@@ -56,8 +56,8 @@ public class StringUtils {
 	};
 
 	/**
-	 * Asserts that the given String {@code value} is a URN that has a suffix which can be parsed as a long value,
-	 * either hex-encoded (starting with 0x) or decimal-encoded.
+	 * Asserts that the given String {@code value} is a URN that has a suffix which can be parsed as a long value, either
+	 * hex-encoded (starting with 0x) or decimal-encoded.
 	 *
 	 * @param value the string to check
 	 *
@@ -98,8 +98,8 @@ public class StringUtils {
 	}
 
 	/**
-	 * Construct a byte from an input string Supported Prefixes are "0x" (hexadecimal) and "0b" (binary), otherwise base
-	 * 10 (decimal) is assumed. Examples: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
+	 * Construct a byte from an input string Supported Prefixes are "0x" (hexadecimal) and "0b" (binary), otherwise base 10
+	 * (decimal) is assumed. Examples: 0x0A 0x1B 0b11001001 40 40 0b11001001 0x1F
 	 *
 	 * @param in The string to parse
 	 *
@@ -229,6 +229,32 @@ public class StringUtils {
 				.replaceAll("\\x1e", "[RS]")
 				.replaceAll("\\x1f", "[US]")
 				.replaceAll("\\x7f", "[DEL]");
+	}
+
+	/**
+	 * Same as calling {@link StringUtils#replaceNonPrintableAsciiCharacters(String)} with argument {@code new
+	 * String(bytes)}.
+	 *
+	 * @param bytes the byte array to transfer to a string and replace non-printable characters in
+	 *
+	 * @return a printable string
+	 */
+	public static String replaceNonPrintableAsciiCharacters(byte[] bytes) {
+		return replaceNonPrintableAsciiCharacters(new String(bytes));
+	}
+
+	/**
+	 * Same as calling {@link StringUtils#replaceNonPrintableAsciiCharacters(String)} with argument {@code new
+	 * String(bytes, 0, bytes.length)}.
+	 *
+	 * @param bytes the byte array to transfer to a string and replace non-printable characters in
+	 * @param offset the offset in {@code bytes} from which to start constructing the string
+	 * @param length the number of bytes to use for constructing the string
+	 *
+	 * @return a printable string
+	 */
+	public static String replaceNonPrintableAsciiCharacters(byte[] bytes, int offset, int length) {
+		return replaceNonPrintableAsciiCharacters(new String(bytes, offset, length));
 	}
 
 	public static String toASCIIString(byte[] tmp) {
