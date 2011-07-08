@@ -41,6 +41,50 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class StringUtils {
 
+	private static final String[] replacements = new String[256];
+
+	static {
+		for (int i = -128; i < 0; i++) {
+			replacements[128 + i] = "[0x" + (Integer.toHexString(i & 0xFF)).toUpperCase() + "]";
+		}
+		replacements[128 + 0x00] = "[NUL]";
+		replacements[128 + 0x01] = "[SOH]";
+		replacements[128 + 0x02] = "[STX]";
+		replacements[128 + 0x03] = "[ETX]";
+		replacements[128 + 0x04] = "[EOT]";
+		replacements[128 + 0x05] = "[ENQ]";
+		replacements[128 + 0x06] = "[ACK]";
+		replacements[128 + 0x07] = "[BEL]";
+		replacements[128 + 0x08] = "[BS]";
+		replacements[128 + 0x09] = "[TAB]";
+		replacements[128 + 0x0a] = "[LF]";
+		replacements[128 + 0x0b] = "[VT]";
+		replacements[128 + 0x0c] = "[FF]";
+		replacements[128 + 0x0d] = "[CR]";
+		replacements[128 + 0x0e] = "[SO]";
+		replacements[128 + 0x0f] = "[SI]";
+		replacements[128 + 0x10] = "[DLE]";
+		replacements[128 + 0x11] = "[DC1]";
+		replacements[128 + 0x12] = "[DC2]";
+		replacements[128 + 0x13] = "[DC3]";
+		replacements[128 + 0x14] = "[DC4]";
+		replacements[128 + 0x15] = "[NACK]";
+		replacements[128 + 0x16] = "[SYN]";
+		replacements[128 + 0x17] = "[ETB]";
+		replacements[128 + 0x18] = "[CAN]";
+		replacements[128 + 0x19] = "[EM]";
+		replacements[128 + 0x1a] = "[SUB]";
+		replacements[128 + 0x1b] = "[ESC]";
+		replacements[128 + 0x1c] = "[FS]";
+		replacements[128 + 0x1d] = "[GS]";
+		replacements[128 + 0x1e] = "[RS]";
+		replacements[128 + 0x1f] = "[US]";
+		for (int i = 0x20; i < 0x7f; i++) {
+			replacements[128 + i] = new String(new byte[]{(byte) (i & 0xFF)});
+		}
+		replacements[128 + 0x7f] = "[DEL]";
+	}
+
 	public static final Function<String, String> STRING_TO_LOWER_CASE = new Function<String, String>() {
 		@Override
 		public String apply(final String input) {
@@ -195,40 +239,8 @@ public class StringUtils {
 	 * @return a printable String
 	 */
 	public static String replaceNonPrintableAsciiCharacters(String str) {
-		return str
-				.replaceAll("\\x00", "[NUL]")
-				.replaceAll("\\x01", "[SOH]")
-				.replaceAll("\\x02", "[STX]")
-				.replaceAll("\\x03", "[ETX]")
-				.replaceAll("\\x04", "[EOT]")
-				.replaceAll("\\x05", "[ENQ]")
-				.replaceAll("\\x06", "[ACK]")
-				.replaceAll("\\x07", "[BEL]")
-				.replaceAll("\\x08", "[BS]")
-				.replaceAll("\\x09", "[TAB]")
-				.replaceAll("\\x0a", "[LF]")
-				.replaceAll("\\x0b", "[VT]")
-				.replaceAll("\\x0c", "[FF]")
-				.replaceAll("\\x0d", "[CR]")
-				.replaceAll("\\x0e", "[SO]")
-				.replaceAll("\\x0f", "[SI]")
-				.replaceAll("\\x10", "[DLE]")
-				.replaceAll("\\x11", "[DC1]")
-				.replaceAll("\\x12", "[DC2]")
-				.replaceAll("\\x13", "[DC3]")
-				.replaceAll("\\x14", "[DC4]")
-				.replaceAll("\\x15", "[NACK]")
-				.replaceAll("\\x16", "[SYN]")
-				.replaceAll("\\x17", "[ETB]")
-				.replaceAll("\\x18", "[CAN]")
-				.replaceAll("\\x19", "[EM]")
-				.replaceAll("\\x1a", "[SUB]")
-				.replaceAll("\\x1b", "[ESC]")
-				.replaceAll("\\x1c", "[FS]")
-				.replaceAll("\\x1d", "[GS]")
-				.replaceAll("\\x1e", "[RS]")
-				.replaceAll("\\x1f", "[US]")
-				.replaceAll("\\x7f", "[DEL]");
+		byte[] bytes = str.getBytes();
+		return replaceNonPrintableAsciiCharacters(bytes, 0, bytes.length);
 	}
 
 	/**
@@ -240,7 +252,7 @@ public class StringUtils {
 	 * @return a printable string
 	 */
 	public static String replaceNonPrintableAsciiCharacters(byte[] bytes) {
-		return replaceNonPrintableAsciiCharacters(new String(bytes));
+		return replaceNonPrintableAsciiCharacters(bytes, 0, bytes.length);
 	}
 
 	/**
@@ -254,7 +266,11 @@ public class StringUtils {
 	 * @return a printable string
 	 */
 	public static String replaceNonPrintableAsciiCharacters(byte[] bytes, int offset, int length) {
-		return replaceNonPrintableAsciiCharacters(new String(bytes, offset, length));
+		StringBuilder builder = new StringBuilder();
+		for (int i = offset; i < offset + length; i++) {
+			builder.append(replacements[128 + bytes[i]]);
+		}
+		return builder.toString();
 	}
 
 	public static String toASCIIString(byte[] tmp) {
