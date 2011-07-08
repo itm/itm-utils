@@ -352,8 +352,9 @@ public class StringUtils {
 	 * @return a printable String
 	 */
 	public static String toPrintableString(final byte[] bytes, int maxLength) {
+		final boolean doCut = maxLength < bytes.length;
 		final int length = bytes.length < maxLength ? bytes.length : maxLength;
-		return replaceNonPrintableAsciiCharacters(new String(bytes, 0, length));
+		return replaceNonPrintableAsciiCharacters(new String(bytes, 0, length)) + (doCut ? "..." : "");
 	}
 
 	/**
