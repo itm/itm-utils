@@ -171,7 +171,7 @@
 	</distributionManagement>
 
 	<scm>
-		<connection>scm:git:https://itm@github.com/itm/itm-utils.git</connection>
+		<connection>scm:git:git@github.com:itm/itm-utils.git</connection>
 	</scm>
 
 	<properties>
