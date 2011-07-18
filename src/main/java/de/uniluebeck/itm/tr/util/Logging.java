@@ -39,33 +39,44 @@ public class Logging {
 	/**
 	 * The default {@link PatternLayout}
 	 */
-	private static final String DEFAULT_PATTERN_LAYOUT =
+	public static final String DEFAULT_PATTERN_LAYOUT =
 			"%-23d{yyyy-MM-dd HH:mm:ss,SSS} | %-30.30t | %-30.30c{1} | %-5p | %m%n";
 
 	/**
 	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@link Level#INFO} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT}.
+	 * {@link Level#INFO} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 */
 	public static void setLoggingDefaults() {
-		setLoggingDefaults(Level.INFO, new PatternLayout(DEFAULT_PATTERN_LAYOUT));
+		setLoggingDefaults(Level.INFO, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
 	}
 
 	/**
 	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@link Level#DEBUG} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT}.
+	 * {@link Level#DEBUG} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 */
 	public static void setDebugLoggingDefaults() {
-		setLoggingDefaults(Level.DEBUG, new PatternLayout(DEFAULT_PATTERN_LAYOUT));
+		setLoggingDefaults(Level.DEBUG, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
 	}
 
 	/**
 	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@code level} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT}.
+	 * {@code level} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 *
 	 * @param level the log level to set on the root logger
 	 */
 	public static void setLoggingDefaults(final Level level) {
-		setLoggingDefaults(level, new PatternLayout(DEFAULT_PATTERN_LAYOUT));
+		setLoggingDefaults(level, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
+	}
+
+	/**
+	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
+	 * {@code level} and layout {@code layout} set on a {@link ConsoleAppender}.
+	 *
+	 * @param level  the log level to set on the root logger
+	 * @param layout the layout to set on the appender
+	 */
+	public static void setLoggingDefaults(final Level level, final Layout layout) {
+		setLoggingDefaults(level, new ConsoleAppender(layout));
 	}
 
 	/**
@@ -77,18 +88,64 @@ public class Logging {
 	 * neither the first or the second apply log4j is configured to log level {@code level} and layout {@code layout}.</li>
 	 * </ol>
 	 *
-	 * @param level  the log level to set on the root logger
-	 * @param layout the layout to set on the root logger
+	 * @param level	the log level to set on the root logger
+	 * @param appenders {@link Appender} instances to add to the root logger
 	 */
-	public static void setLoggingDefaults(final Level level, final Layout layout) {
+	public static void setLoggingDefaults(final Level level, final Appender... appenders) {
 
+		if (tryToLoadFromSystemProperty()) {
+			return;
+		}
+
+		if (tryToLoadFromClassPath()) {
+			return;
+		}
+
+		for (Appender appender : appenders) {
+			Logger.getRootLogger().addAppender(appender);
+		}
+		Logger.getRootLogger().setLevel(level);
+	}
+
+	/**
+	 * Tries to load a file with the name "log4j.properties" if found on the classpath and loads the Log4J properties from
+	 * the files' content.
+	 *
+	 * @return {@code true} if loading succeeded, {@code false} otherwise
+	 */
+	private static boolean tryToLoadFromClassPath() {
+		ClassPathFactory factory = new ClassPathFactory();
+		ClassPath classPath = factory.createFromJVM();
+		if (classPath.isResource("log4j.properties")) {
+			try {
+				Properties properties = new Properties();
+				properties.load(classPath.getResourceAsStream("log4j.properties"));
+				PropertyConfigurator.configure(properties);
+				return true;
+			} catch (Exception e) {
+				System.err.println(
+						"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
+				);
+				System.err.println("Using default logging configuration.");
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Tries to load a file from the system property "log4j.configuration" and loads the Log4J properties from the files'
+	 * content.
+	 *
+	 * @return {@code true} if loading succeeded, {@code false} otherwise
+	 */
+	private static boolean tryToLoadFromSystemProperty() {
 		if (System.getProperty("log4j.configuration") != null) {
 
 			File configurationFile = new File(System.getProperty("log4j.configuration"));
 			if (configurationFile.exists() && !configurationFile.isDirectory() && configurationFile.canRead()) {
 				try {
 					PropertyConfigurator.configure(configurationFile.getAbsolutePath());
-					return;
+					return true;
 				} catch (Exception e) {
 					System.err.println(
 							"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
@@ -98,27 +155,6 @@ public class Logging {
 			}
 
 		}
-
-		ClassPathFactory factory = new ClassPathFactory();
-		ClassPath classPath = factory.createFromJVM();
-		if (classPath.isResource("log4j.properties")) {
-			try {
-				Properties properties = new Properties();
-				properties.load(classPath.getResourceAsStream("log4j.properties"));
-				PropertyConfigurator.configure(properties);
-				return;
-			} catch (Exception e) {
-				System.err.println(
-						"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
-				);
-				System.err.println("Using default logging configuration.");
-			}
-		}
-
-
-		Appender appender = new ConsoleAppender(layout);
-
-		Logger.getRootLogger().addAppender(appender);
-		Logger.getRootLogger().setLevel(level);
+		return false;
 	}
 }
