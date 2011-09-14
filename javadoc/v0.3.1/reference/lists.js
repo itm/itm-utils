@@ -1,0 +1,25 @@
+var DATA = [
+      { id:0, label:"de.uniluebeck.itm.tr.util", link:"de/uniluebeck/itm/tr/util/package-summary.html", type:"package" },
+      { id:1, label:"de.uniluebeck.itm.tr.util.AbstractListenable", link:"de/uniluebeck/itm/tr/util/AbstractListenable.html", type:"class" },
+      { id:2, label:"de.uniluebeck.itm.tr.util.ExecutorUtils", link:"de/uniluebeck/itm/tr/util/ExecutorUtils.html", type:"class" },
+      { id:3, label:"de.uniluebeck.itm.tr.util.FileUtils", link:"de/uniluebeck/itm/tr/util/FileUtils.html", type:"class" },
+      { id:4, label:"de.uniluebeck.itm.tr.util.ForkJoinHelper", link:"de/uniluebeck/itm/tr/util/ForkJoinHelper.html", type:"class" },
+      { id:5, label:"de.uniluebeck.itm.tr.util.ForwardingScheduledExecutorService", link:"de/uniluebeck/itm/tr/util/ForwardingScheduledExecutorService.html", type:"class" },
+      { id:6, label:"de.uniluebeck.itm.tr.util.Listenable", link:"de/uniluebeck/itm/tr/util/Listenable.html", type:"class" },
+      { id:7, label:"de.uniluebeck.itm.tr.util.Logging", link:"de/uniluebeck/itm/tr/util/Logging.html", type:"class" },
+      { id:8, label:"de.uniluebeck.itm.tr.util.NetworkUtils", link:"de/uniluebeck/itm/tr/util/NetworkUtils.html", type:"class" },
+      { id:9, label:"de.uniluebeck.itm.tr.util.Preconditions", link:"de/uniluebeck/itm/tr/util/Preconditions.html", type:"class" },
+      { id:10, label:"de.uniluebeck.itm.tr.util.PropertiesUtils", link:"de/uniluebeck/itm/tr/util/PropertiesUtils.html", type:"class" },
+      { id:11, label:"de.uniluebeck.itm.tr.util.RateLimiter", link:"de/uniluebeck/itm/tr/util/RateLimiter.html", type:"class" },
+      { id:12, label:"de.uniluebeck.itm.tr.util.RateLimiterImpl", link:"de/uniluebeck/itm/tr/util/RateLimiterImpl.html", type:"class" },
+      { id:13, label:"de.uniluebeck.itm.tr.util.SecureIdGenerator", link:"de/uniluebeck/itm/tr/util/SecureIdGenerator.html", type:"class" },
+      { id:14, label:"de.uniluebeck.itm.tr.util.Service", link:"de/uniluebeck/itm/tr/util/Service.html", type:"class" },
+      { id:15, label:"de.uniluebeck.itm.tr.util.StringUtils", link:"de/uniluebeck/itm/tr/util/StringUtils.html", type:"class" },
+      { id:16, label:"de.uniluebeck.itm.tr.util.TimeDiff", link:"de/uniluebeck/itm/tr/util/TimeDiff.html", type:"class" },
+      { id:17, label:"de.uniluebeck.itm.tr.util.TimedCache", link:"de/uniluebeck/itm/tr/util/TimedCache.html", type:"class" },
+      { id:18, label:"de.uniluebeck.itm.tr.util.TimedCacheListener", link:"de/uniluebeck/itm/tr/util/TimedCacheListener.html", type:"class" },
+      { id:19, label:"de.uniluebeck.itm.tr.util.Triple", link:"de/uniluebeck/itm/tr/util/Triple.html", type:"class" },
+      { id:20, label:"de.uniluebeck.itm.tr.util.Tuple", link:"de/uniluebeck/itm/tr/util/Tuple.html", type:"class" },
+      { id:21, label:"de.uniluebeck.itm.tr.util.UrlUtils", link:"de/uniluebeck/itm/tr/util/UrlUtils.html", type:"class" }
+
+    ];
