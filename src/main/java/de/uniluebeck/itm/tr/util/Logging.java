@@ -29,12 +29,18 @@ import org.apache.log4j.*;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Helper class to set logging defaults for log4j in a running JVM.
  */
 @SuppressWarnings("unused")
 public class Logging {
+
+	/**
+	 * All available log levels as an array.
+	 */
+	private final static Level[] LOG_LEVELS = {Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR};
 
 	/**
 	 * The default {@link PatternLayout}
