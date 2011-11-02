@@ -25,18 +25,24 @@ package de.uniluebeck.itm.tr.util;
 
 import com.google.common.collect.ImmutableList;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 /**
  * Abstract base class for classes that have to inform listeners about events. This class is thread-safe.
  *
  * @param <T> the listener interface under which listeners register themselves.
  */
+@SuppressWarnings("unused")
 public abstract class AbstractListenable<T> implements Listenable<T> {
 
 	protected ImmutableList<T> listeners = (ImmutableList<T>) ImmutableList.builder().build();
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void addListener(T listener) {
+
+		checkNotNull(listener);
 
 		// assure listener is only contained once
 		ImmutableList.Builder<Object> builder = ImmutableList.builder();
@@ -47,18 +53,23 @@ public abstract class AbstractListenable<T> implements Listenable<T> {
 		}
 		builder.add(listener);
 		
-		listeners = (ImmutableList<T>) builder.build();
+		listeners = builder.build();
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void removeListener(T listener) {
+
+		checkNotNull(listener);
+
 		ImmutableList.Builder<Object> listBuilder = ImmutableList.builder();
 		for (T t : listeners) {
 			if (t != listener) {
 				listBuilder.add(t);
 			}
 		}
-		listeners = (ImmutableList<T>) listBuilder.build();
+
+		listeners = listBuilder.build();
 	}
 
 }
