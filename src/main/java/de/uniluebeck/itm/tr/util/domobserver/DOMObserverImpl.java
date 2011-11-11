@@ -1,77 +1,87 @@
 package de.uniluebeck.itm.tr.util.domobserver;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import de.uniluebeck.itm.tr.util.ListenerManager;
-import org.w3c.dom.Node;
+import java.util.ArrayList;
 
 import javax.xml.namespace.QName;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathExpression;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
+import de.uniluebeck.itm.tr.util.ListenerManager;
 
 public class DOMObserverImpl implements DOMObserver {
 
-	private ListenerManager<DOMObserverListener> listenerManager;
+    private static final Logger log = LoggerFactory.getLogger(DOMObserverImpl.class);
+    
+    private ListenerManager<DOMObserverListener> listenerManager;
 
-	private Node oldNode;
+    private Node oldNode;
 
-	private Node currentNode;
+    private Node currentNode;
 
-	private Provider<Node> newNodeProvider;
+    private Provider<Node> newNodeProvider;
 
-	@Inject
-	public DOMObserverImpl(final ListenerManager<DOMObserverListener> listenerManager,
-						   final Provider<Node> newNodeProvider) {
+    @Inject
+    public DOMObserverImpl(final ListenerManager<DOMObserverListener> listenerManager,
+            final Provider<Node> newNodeProvider) {
 
-		this.listenerManager = listenerManager;
-		this.newNodeProvider = newNodeProvider;
-	}
+        this.listenerManager = listenerManager;
+        this.newNodeProvider = newNodeProvider;
+    }
 
-	@Override
-	public void addListener(final DOMObserverListener listener) {
-		listenerManager.addListener(listener);
-	}
+    @Override
+    public void addListener(final DOMObserverListener listener) {
+        listenerManager.addListener(listener);
+    }
 
-	@Override
-	public void removeListener(final DOMObserverListener listener) {
-		listenerManager.removeListener(listener);
-	}
+    @Override
+    public void removeListener(final DOMObserverListener listener) {
+        listenerManager.removeListener(listener);
+    }
 
-	@Override
-	public void run() {
+    @Override
+    public void run() {
 
-		updateCurrentDOM();
+        updateCurrentDOM();
 
-		if (!changesOccurred()) {
-			return;
-		}
+        if (!changesOccurred()) {
+            return;
+        }
 
-		for (DOMObserverListener listener : listenerManager.getListeners()) {
+        for (DOMObserverListener listener : listenerManager.getListeners()) {
 
-			String xPathExpression = listener.getXPathExpression();
-			QName qName = listener.getQName();
+            String xPathExpression = listener.getXPathExpression();
+            QName qName = listener.getQName();
 
-			try {
-				listener.onDOMChanged(getLastScopedChangesInternal(xPathExpression, qName));
-			} catch (XPathExpressionException e) {
-				throw new RuntimeException(e);
-			}
-		}
+            try {
+                listener.onDOMChanged(getLastScopedChangesInternal(xPathExpression, qName));
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-	}
+    }
 
-	@Override
-	public DOMTuple getLastScopedChanges(final String xPathExpression, final QName qName)
-			throws XPathExpressionException {
+    @Override
+    public DOMTuple getLastScopedChanges(final String xPathExpression, final QName qName)
+            throws XPathExpressionException {
 
-		if (!changesOccurred()) {
-			return null;
-		}
+        if (!changesOccurred()) {
+            return null;
+        }
 
-		return getLastScopedChangesInternal(xPathExpression, qName);
-	}
+        return getLastScopedChangesInternal(xPathExpression, qName);
+    }
 
 	@Override
 	public void updateCurrentDOM() {
@@ -79,36 +89,115 @@ public class DOMObserverImpl implements DOMObserver {
 		try {
 			currentNode = newNodeProvider.get();
 		} catch (Exception e) {
+		        //TODO: check if it is better to throw the error 
+		        log.error("could not retrieve new node");
 			currentNode = null;
 		}
-	}
+}
+    private DOMTuple getLastScopedChangesInternal(final String xPathExpression, final QName qName)
+            throws XPathExpressionException {
 
-	private DOMTuple getLastScopedChangesInternal(final String xPathExpression, final QName qName)
-			throws XPathExpressionException {
+        Object oldScopedObject = oldNode == null ? null : getScopedObject(oldNode, xPathExpression, qName);
+        Object currentScopedObject = currentNode == null ? null : getScopedObject(currentNode, xPathExpression, qName);
 
-		Object oldScopedObject = oldNode == null ? null : getScopedObject(oldNode, xPathExpression, qName);
-		Object currentScopedObject =
-				currentNode == null ? null : getScopedObject(currentNode, xPathExpression, qName);
+        // both objects null -->no change
+        if (null == oldScopedObject && null == currentScopedObject) {
+            return null;
+        }
 
-		return new DOMTuple(oldScopedObject, currentScopedObject);
-	}
+        // both not null --> check for qName
+        if (null != oldScopedObject && null != currentScopedObject) {
+            // //NODE --> check via isNodeEqual
+            if (XPathConstants.NODE.equals(qName)) {
+                if (((Node) oldScopedObject).isEqualNode((Node) currentNode)) {
+                    return null;
+                }
 
-	private Object getScopedObject(final Node node, final String xPathExpression, final QName qName)
-			throws XPathExpressionException {
+            }
+            if (XPathConstants.NODESET.equals(qName)) {
+                if (areNodeSetsEqual(oldScopedObject, currentScopedObject)) {
+                    return null;
+                }
+            } else {
+                // XPathConstants.BOOLEAN, NUMBER, STRING --> rely on equals method
+                if (oldScopedObject.equals(currentScopedObject)) {
+                    return null;
+                }
+            }
 
-		XPathFactory xPathFactory = XPathFactory.newInstance();
-		XPath xPath = xPathFactory.newXPath();
-		XPathExpression expression = xPath.compile(xPathExpression);
+        }
+        // either both not null and change detected or
+        // one object null the other not return change
 
-		return expression.evaluate(node, qName);
-	}
+        return new DOMTuple(oldScopedObject, currentScopedObject);
 
-	private boolean changesOccurred() {
+    }
 
-		boolean sameInstance = oldNode == currentNode;
-		boolean oldIsNullCurrentIsNot = oldNode == null && currentNode != null;
-		boolean nodeTreesEqual = oldNode != null && currentNode != null && !oldNode.isEqualNode(currentNode);
+    /**
+     * Checks equality of two node sets.
+     * 
+     * Wraps the nodes so that we have a proper equals method and then use List.containsAll
+     * for check of equality.
+     * 
+     * @param oldScopedObject
+     * @param currentScopedObject
+     * @return {@code null} if no change is detected else {@link DOMTuple}
+     */
+    private boolean areNodeSetsEqual(Object oldScopedObject, Object currentScopedObject) {
+        
+        ArrayList<WrappedNode> oldNodes = convertNodeListToHashSet((NodeList) oldScopedObject);
+        ArrayList<WrappedNode> currentNodes = convertNodeListToHashSet((NodeList) currentScopedObject);
+        if (oldNodes.size() == currentNodes.size()) {
+            return oldNodes.containsAll(currentNodes);
+        } else {
+            return false;
+        }
 
-		return oldIsNullCurrentIsNot || !sameInstance || nodeTreesEqual;
-	}
+    }
+
+    private ArrayList<WrappedNode> convertNodeListToHashSet(NodeList nodeList) {
+        ArrayList<WrappedNode> result = new ArrayList<WrappedNode>();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            result.add(new WrappedNode(nodeList.item(i)) {
+            });
+        }
+        return result;
+    }
+
+    class WrappedNode  {
+        private Node node;
+
+        public Node getNode() {
+            return node;
+        }
+
+        public WrappedNode(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this.node.isEqualNode(((WrappedNode) obj).getNode());
+        }
+
+    }
+
+    private Object getScopedObject(final Node node, final String xPathExpression, final QName qName)
+            throws XPathExpressionException {
+
+        XPathFactory xPathFactory = XPathFactory.newInstance();
+        XPath xPath = xPathFactory.newXPath();
+        XPathExpression expression = xPath.compile(xPathExpression);
+
+        return expression.evaluate(node, qName);
+    }
+
+    private boolean changesOccurred() {
+
+        boolean sameInstance = oldNode == currentNode;
+        boolean oldIsNullCurrentIsNot = oldNode == null && currentNode != null;
+        boolean nodeTreesEqual = oldNode != null && currentNode != null && !oldNode.isEqualNode(currentNode);
+
+        return oldIsNullCurrentIsNot || !sameInstance || nodeTreesEqual;
+    }
 }
