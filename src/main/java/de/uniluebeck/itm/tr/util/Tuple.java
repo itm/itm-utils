@@ -36,12 +36,12 @@ public class Tuple<V, W> {
 	/**
 	 * The first element
 	 */
-	private V first;
+	protected V first;
 
 	/**
 	 * The second element
 	 */
-	private W second;
+	protected W second;
 
 	/**
 	 * Constructs a new immutable tuple.
@@ -56,6 +56,10 @@ public class Tuple<V, W> {
 
 		this.first = first;
 		this.second = second;
+	}
+
+	protected Tuple() {
+		// nothing to do
 	}
 
 	/**
