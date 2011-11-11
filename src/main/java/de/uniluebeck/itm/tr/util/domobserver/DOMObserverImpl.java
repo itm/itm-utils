@@ -76,7 +76,11 @@ public class DOMObserverImpl implements DOMObserver {
 	@Override
 	public void updateCurrentDOM() {
 		oldNode = currentNode;
-		currentNode = newNodeProvider.get();
+		try {
+			currentNode = newNodeProvider.get();
+		} catch (Exception e) {
+			currentNode = null;
+		}
 	}
 
 	private DOMTuple getLastScopedChangesInternal(final String xPathExpression, final QName qName)

@@ -18,6 +18,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPathConstants;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -123,5 +124,22 @@ public class DOMObserverImplTest {
 		domObserver.updateCurrentDOM();
 		domObserver.updateCurrentDOM();
 		assertNull(domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
+	}
+
+	@Test
+	public void testThatCurrentIsNullIfProviderThrowsException() throws Exception {
+
+		Node config1DOM = createDOM(CONFIG_1);
+
+		when(nodeProvider.get())
+				.thenReturn(config1DOM)
+				.thenThrow(new RuntimeException("Test"));
+
+		domObserver.updateCurrentDOM();
+		domObserver.updateCurrentDOM();
+
+		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		assertNotNull(lastScopedChanges.getFirst());
+		assertNull(lastScopedChanges.getSecond());
 	}
 }
