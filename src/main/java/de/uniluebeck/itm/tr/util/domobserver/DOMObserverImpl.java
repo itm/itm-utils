@@ -105,6 +105,6 @@ public class DOMObserverImpl implements DOMObserver {
 		boolean oldIsNullCurrentIsNot = oldNode == null && currentNode != null;
 		boolean nodeTreesEqual = oldNode != null && currentNode != null && !oldNode.isEqualNode(currentNode);
 
-		return oldIsNullCurrentIsNot || sameInstance || nodeTreesEqual;
+		return oldIsNullCurrentIsNot || !sameInstance || nodeTreesEqual;
 	}
 }
