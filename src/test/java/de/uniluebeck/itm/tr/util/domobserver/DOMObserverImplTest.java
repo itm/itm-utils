@@ -25,6 +25,11 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DOMObserverImplTest {
 
+	private static final String CONFIG_1 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed.xml";
+	private static final String CONFIG_2 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed2.xml";
+
+	private static final String X_PATH_EXPRESSION_ROOT_NODE = "/*";
+
 	private DOMObserver domObserver;
 
 	@Mock
@@ -57,13 +62,13 @@ public class DOMObserverImplTest {
 		domObserver.updateCurrentDOM();
 
 		// validate
-		assertNull(domObserver.getLastScopedChanges("/*", XPathConstants.NODE));
+		assertNull(domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
 	}
 
 	@Test
 	public void testThatChangeIsDetectedWhenOldIsNullAndNewIsNotNull() throws Exception {
 
-		Node node = createDOM("de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed.xml");
+		Node node = createDOM(CONFIG_1);
 		when(nodeProvider.get()).thenReturn(node);
 
 		domObserver.updateCurrentDOM();
@@ -109,5 +114,14 @@ public class DOMObserverImplTest {
 	@Test
 	public void testThatNewIsNullIfInvalidXML() throws Exception {
 		// TODO implement
+	}
+
+	@Test
+	public void testThatNoChangesAreDetectedIfProviderDeliversSameInstanceAgain() throws Exception {
+		Node config1DOM = createDOM(CONFIG_1);
+		when(nodeProvider.get()).thenReturn(config1DOM);
+		domObserver.updateCurrentDOM();
+		domObserver.updateCurrentDOM();
+		assertNull(domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
 	}
 }
