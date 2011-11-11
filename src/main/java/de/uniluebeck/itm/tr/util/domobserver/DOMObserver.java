@@ -3,6 +3,7 @@ package de.uniluebeck.itm.tr.util.domobserver;
 import de.uniluebeck.itm.tr.util.Listenable;
 
 import javax.xml.namespace.QName;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 
 /**
@@ -15,6 +16,9 @@ import javax.xml.xpath.XPathExpressionException;
 public interface DOMObserver extends Runnable, Listenable<DOMObserverListener> {
 
 	/**
+	 * Returns the changes since last calling {@link DOMObserver#updateCurrentDOM()}
+	 * @param xPathExpression the scope to inspect
+	 * @param qName type of expected result QName see also {@link XPathConstants}
 	 * @return {@code null} if no changes occurred or a {@link DOMTuple} instance holding the old (scoped) DOM and the new
 	 *         (scoped) DOM otherwise
 	 */
@@ -23,6 +27,7 @@ public interface DOMObserver extends Runnable, Listenable<DOMObserverListener> {
 	/**
 	 * Lets the observer "advance in time" by retrieving a new state (e.g. from an XML file stored on disk) and remembering
 	 * the current state as the next old state.
+	 * 
 	 */
 	void updateCurrentDOM();
 
