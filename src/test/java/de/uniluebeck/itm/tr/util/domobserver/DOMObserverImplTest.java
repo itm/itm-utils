@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -26,6 +25,7 @@ import com.google.inject.TypeLiteral;
 
 import de.uniluebeck.itm.tr.util.ListenerManager;
 import de.uniluebeck.itm.tr.util.ListenerManagerImpl;
+
 
 @RunWith(MockitoJUnitRunner.class)
 public class DOMObserverImplTest {
@@ -168,5 +168,22 @@ public class DOMObserverImplTest {
 		domObserver.updateCurrentDOM();
 		domObserver.updateCurrentDOM();
 		assertNull(domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
+	}
+
+	@Test
+	public void testThatCurrentIsNullIfProviderThrowsException() throws Exception {
+
+		Node config1DOM = createDOM(CONFIG_1);
+
+		when(nodeProvider.get())
+				.thenReturn(config1DOM)
+				.thenThrow(new RuntimeException("Test"));
+
+		domObserver.updateCurrentDOM();
+		domObserver.updateCurrentDOM();
+
+		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		assertNotNull(lastScopedChanges.getFirst());
+		assertNull(lastScopedChanges.getSecond());
 	}
 }

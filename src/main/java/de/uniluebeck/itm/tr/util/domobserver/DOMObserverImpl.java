@@ -79,12 +79,15 @@ public class DOMObserverImpl implements DOMObserver {
         return getLastScopedChangesInternal(xPathExpression, qName);
     }
 
-    @Override
-    public void updateCurrentDOM() {
-        oldNode = currentNode;
-        currentNode = newNodeProvider.get();
-    }
-
+	@Override
+	public void updateCurrentDOM() {
+		oldNode = currentNode;
+		try {
+			currentNode = newNodeProvider.get();
+		} catch (Exception e) {
+			currentNode = null;
+		}
+}
     private DOMTuple getLastScopedChangesInternal(final String xPathExpression, final QName qName)
             throws XPathExpressionException {
 
