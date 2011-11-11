@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPathConstants;
@@ -25,11 +26,13 @@ import com.google.inject.TypeLiteral;
 
 import de.uniluebeck.itm.tr.util.ListenerManager;
 import de.uniluebeck.itm.tr.util.ListenerManagerImpl;
+import de.uniluebeck.itm.tr.util.Logging;
 
 
 @RunWith(MockitoJUnitRunner.class)
 public class DOMObserverImplTest {
 
+        
 	private static final String CONFIG_1 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed.xml";
 	private static final String CONFIG_2 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed2.xml";
 
@@ -43,6 +46,7 @@ public class DOMObserverImplTest {
 
 	@Before
 	public void setUp() throws Exception {
+	    Logging.setLoggingDefaults();
 		domObserver = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
@@ -158,7 +162,14 @@ public class DOMObserverImplTest {
 
 	@Test
 	public void testThatNewIsNullIfInvalidXML() throws Exception {
-		// TODO implement
+	    Node node1 = createDOM(CONFIG_1);
+	    when(nodeProvider.get()).thenReturn(node1).thenThrow(new RuntimeException("test xml is invalid"));
+	    domObserver.updateCurrentDOM(); //new node is now node1
+            domObserver.updateCurrentDOM(); //new node is now null old node is node1
+            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+            assertNotNull(lastScopedChanges);
+            assertNotNull(lastScopedChanges.getFirst());
+            assertNull(lastScopedChanges.getSecond());
 	}
 
 	@Test

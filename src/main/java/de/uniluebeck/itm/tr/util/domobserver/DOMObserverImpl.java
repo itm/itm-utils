@@ -9,6 +9,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -19,6 +21,8 @@ import de.uniluebeck.itm.tr.util.ListenerManager;
 
 public class DOMObserverImpl implements DOMObserver {
 
+    private static final Logger log = LoggerFactory.getLogger(DOMObserverImpl.class);
+    
     private ListenerManager<DOMObserverListener> listenerManager;
 
     private Node oldNode;
@@ -85,6 +89,8 @@ public class DOMObserverImpl implements DOMObserver {
 		try {
 			currentNode = newNodeProvider.get();
 		} catch (Exception e) {
+		        //TODO: check if it is better to throw the error 
+		        log.error("could not retrieve new node");
 			currentNode = null;
 		}
 }
