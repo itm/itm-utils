@@ -53,7 +53,7 @@ public abstract class AbstractListenable<T> implements Listenable<T> {
 		}
 		builder.add(listener);
 		
-		listeners = builder.build();
+		listeners = (ImmutableList<T>) builder.build();
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public abstract class AbstractListenable<T> implements Listenable<T> {
 			}
 		}
 
-		listeners = listBuilder.build();
+		listeners = (ImmutableList<T>) listBuilder.build();
 	}
 
 }
