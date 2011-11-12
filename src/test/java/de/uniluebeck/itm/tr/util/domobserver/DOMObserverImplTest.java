@@ -1,44 +1,41 @@
 package de.uniluebeck.itm.tr.util.domobserver;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathConstants;
-
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
+import de.uniluebeck.itm.tr.util.ListenerManager;
+import de.uniluebeck.itm.tr.util.ListenerManagerImpl;
+import de.uniluebeck.itm.tr.util.Logging;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPathConstants;
 
-import de.uniluebeck.itm.tr.util.ListenerManager;
-import de.uniluebeck.itm.tr.util.ListenerManagerImpl;
-import de.uniluebeck.itm.tr.util.Logging;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
 public class DOMObserverImplTest {
 
-        
+
 	private static final String CONFIG_1 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed.xml";
+
 	private static final String CONFIG_2 = "de/uniluebeck/itm/tr/util/domobserver/tr.iwsn-testbed2.xml";
 
 	private static final String X_PATH_EXPRESSION_ROOT_NODE = "/*";
+
 	private static final String X_PATH_EXPRESSION_APPLICATION_NODES = "//application";
-	
+
 	private DOMObserver domObserver;
 
 	@Mock
@@ -46,7 +43,7 @@ public class DOMObserverImplTest {
 
 	@Before
 	public void setUp() throws Exception {
-	    Logging.setLoggingDefaults();
+		Logging.setLoggingDefaults();
 		domObserver = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
@@ -102,74 +99,76 @@ public class DOMObserverImplTest {
 		when(nodeProvider.get()).thenReturn(node1).thenReturn(null);
 		domObserver.updateCurrentDOM(); //new node is now node1
 		domObserver.updateCurrentDOM(); //new node is now null old node is node1
-		
+
 		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
 		assertNotNull(lastScopedChanges);
 		assertNotNull(lastScopedChanges.getFirst());
 		assertNull(lastScopedChanges.getSecond());
-		
-		
+
+
 	}
 
 	@Test
 	public void testThatNoChangeIsDetectedWhenBotNotNullAndBothAreEqualUnscoped() throws Exception {
-	    Node node1 = createDOM(CONFIG_1);
-	    Node node2 = createDOM(CONFIG_1); // same config for both nodes
-            when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
-            domObserver.updateCurrentDOM(); //new node is now node1
-            domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
-            assertNull(lastScopedChanges);
-           
+		Node node1 = createDOM(CONFIG_1);
+		Node node2 = createDOM(CONFIG_1); // same config for both nodes
+		when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		assertNull(lastScopedChanges);
+
 	}
 
 	@Test
 	public void testThatChangeIsDetectedWhenBothNotNullAndChangeOccurredUnscoped() throws Exception {
-	    Node node1 = createDOM(CONFIG_1);
-            Node node2 = createDOM(CONFIG_2); //now the configs differ
-            when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
-            domObserver.updateCurrentDOM(); //new node is now node1
-            domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
-            assertNotNull(lastScopedChanges);
-            assertNotNull(lastScopedChanges.getFirst());
-            assertFalse(((Node)lastScopedChanges.getFirst()).isEqualNode((Node) lastScopedChanges.getSecond()));
+		Node node1 = createDOM(CONFIG_1);
+		Node node2 = createDOM(CONFIG_2); //now the configs differ
+		when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		assertNotNull(lastScopedChanges);
+		assertNotNull(lastScopedChanges.getFirst());
+		assertFalse(((Node) lastScopedChanges.getFirst()).isEqualNode((Node) lastScopedChanges.getSecond()));
 	}
 
 	@Test
 	public void testThatNoChangeIsDetectedWhenBotNotNullAndBothAreEqualScoped() throws Exception {
-	    Node node1 = createDOM(CONFIG_1);
-            Node node2 = createDOM(CONFIG_1); // same config for both nodes
-            when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
-            domObserver.updateCurrentDOM(); //new node is now node1
-            domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
-            assertNull(lastScopedChanges);
+		Node node1 = createDOM(CONFIG_1);
+		Node node2 = createDOM(CONFIG_1); // same config for both nodes
+		when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges =
+				domObserver.getLastScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
+		assertNull(lastScopedChanges);
 	}
 
 	@Test
 	public void testThatChangeIsDetectedWhenBothNotNullAndChangeOccurredScoped() throws Exception {
-	    Node node1 = createDOM(CONFIG_1);
-            Node node2 = createDOM(CONFIG_2); //now the configs differ
-            when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
-            domObserver.updateCurrentDOM(); //new node is now node1
-            domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
-            assertNotNull(lastScopedChanges);
-            assertNotNull(lastScopedChanges.getFirst());
-            assertNotNull(lastScopedChanges.getSecond());
+		Node node1 = createDOM(CONFIG_1);
+		Node node2 = createDOM(CONFIG_2); //now the configs differ
+		when(nodeProvider.get()).thenReturn(node1).thenReturn(node2);
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges =
+				domObserver.getLastScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
+		assertNotNull(lastScopedChanges);
+		assertNotNull(lastScopedChanges.getFirst());
+		assertNotNull(lastScopedChanges.getSecond());
 	}
 
 	@Test
 	public void testThatNewIsNullIfInvalidXML() throws Exception {
-	    Node node1 = createDOM(CONFIG_1);
-	    when(nodeProvider.get()).thenReturn(node1).thenThrow(new RuntimeException("test xml is invalid"));
-	    domObserver.updateCurrentDOM(); //new node is now node1
-            domObserver.updateCurrentDOM(); //new node is now null old node is node1
-            DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
-            assertNotNull(lastScopedChanges);
-            assertNotNull(lastScopedChanges.getFirst());
-            assertNull(lastScopedChanges.getSecond());
+		Node node1 = createDOM(CONFIG_1);
+		when(nodeProvider.get()).thenReturn(node1).thenThrow(new RuntimeException("test xml is invalid"));
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now null old node is node1
+		DOMTuple lastScopedChanges = domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		assertNotNull(lastScopedChanges);
+		assertNotNull(lastScopedChanges.getFirst());
+		assertNull(lastScopedChanges.getSecond());
 	}
 
 	@Test
@@ -179,6 +178,21 @@ public class DOMObserverImplTest {
 		domObserver.updateCurrentDOM();
 		domObserver.updateCurrentDOM();
 		assertNull(domObserver.getLastScopedChanges(X_PATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
+	}
+
+	@Test
+	public void testThatNoListenersAreCalledIfProviderDeliversSameInstanceAgain() throws Exception {
+		Node config1DOM = createDOM(CONFIG_1);
+		when(nodeProvider.get()).thenReturn(config1DOM);
+		DOMObserverListener listenerMock = mock(DOMObserverListener.class);
+		when(listenerMock.getXPathExpression()).thenReturn(X_PATH_EXPRESSION_ROOT_NODE);
+		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
+		domObserver.addListener(listenerMock);
+		domObserver.run();
+		verify(listenerMock, times(1)).onDOMChanged(Matchers.<DOMTuple>any());
+		reset(listenerMock);
+		domObserver.run();
+		verify(listenerMock, never()).onDOMChanged(Matchers.<DOMTuple>any());
 	}
 
 	@Test
