@@ -91,7 +91,7 @@ public class DOMObserverImpl implements DOMObserver {
 			currentNode = newNodeProvider.get();
 		} catch (Exception e) {
 			//TODO: check if it is better to throw the error
-			log.error("could not retrieve new node");
+			log.warn("Unable to load the next DOM Node. Maybe the source used by the provider ({}) is corrupted?", newNodeProvider);
 			currentNode = null;
 		}
 	}
