@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @param <T> the listener interface under which listeners register themselves.
  */
 @SuppressWarnings("unused")
-public abstract class AbstractListenable<T> implements Listenable<T> {
+public class ListenerManagerImpl<T> implements ListenerManager<T> {
 
 	protected ImmutableList<T> listeners = (ImmutableList<T>) ImmutableList.builder().build();
 
@@ -72,4 +72,8 @@ public abstract class AbstractListenable<T> implements Listenable<T> {
 		listeners = (ImmutableList<T>) listBuilder.build();
 	}
 
+	@Override
+	public ImmutableList<T> getListeners() {
+		return listeners;
+	}
 }
