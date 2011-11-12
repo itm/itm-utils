@@ -10,7 +10,10 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.namespace.QName;
 import javax.xml.xpath.*;
-import java.util.ArrayList;
+import java.util.List;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Lists.newArrayList;
 
 public class DOMObserverImpl implements DOMObserver {
 
@@ -45,58 +48,90 @@ public class DOMObserverImpl implements DOMObserver {
 	@Override
 	public void run() {
 
-		updateCurrentDOM();
+		try {
+			updateCurrentDOM();
+		} catch (Exception e) {
+			notifyDOMLoadFailure(e);
+		}
 
 		if (!changesOccurred()) {
 			return;
 		}
 
-		for (DOMObserverListener listener : listenerManager.getListeners()) {
-
-			String xPathExpression = listener.getXPathExpression();
-			QName qName = listener.getQName();
-
-			DOMTuple lastScopedChangesInternal = null;
-
-			try {
-				lastScopedChangesInternal = getLastScopedChangesInternal(xPathExpression, qName);
-			} catch (XPathExpressionException e) {
-				throw new RuntimeException(e);
-			}
-
-			try {
-				listener.onDOMChanged(lastScopedChangesInternal);
-			} catch (Exception e) {
-				log.error("Exception occurred while calling {} listener: {}", listener, e);
-			}
-		}
+		evaluateXPathExpressionsAndNotifyListeners();
 
 	}
 
+	private void evaluateXPathExpressionsAndNotifyListeners() {
+		for (DOMObserverListener listener : listenerManager.getListeners()) {
+			evaluateXPathExpressionAndNotify(listener);
+		}
+	}
+
+	private void evaluateXPathExpressionAndNotify(final DOMObserverListener listener) {
+
+		String xPathExpression = listener.getXPathExpression();
+		QName qName = listener.getQName();
+
+		DOMTuple scopedChanges;
+
+		try {
+			scopedChanges = getScopedChangesInternal(xPathExpression, qName);
+		} catch (XPathExpressionException e) {
+			notifyXPathEvaluationFailure(e);
+			return;
+		}
+
+		notifyListener(listener, scopedChanges);
+	}
+
+	private void notifyListener(final DOMObserverListener listener, final DOMTuple scopedChangesInternal) {
+		try {
+			listener.onDOMChanged(scopedChangesInternal);
+		} catch (Exception e) {
+			log.warn("Exception occurred while calling {} listener: {}", listener, e);
+		}
+	}
+
+	private void notifyDOMLoadFailure(final Exception e) {
+		for (DOMObserverListener listener : listenerManager.getListeners()) {
+			listener.onDOMLoadFailure(e);
+		}
+	}
+
+	private void notifyXPathEvaluationFailure(final XPathExpressionException e) {
+		for (DOMObserverListener listener : listenerManager.getListeners()) {
+			listener.onXPathEvaluationFailure(e);
+		}
+	}
+
 	@Override
-	public DOMTuple getLastScopedChanges(final String xPathExpression, final QName qName)
+	public DOMTuple getScopedChanges(final String xPathExpression, final QName qName)
 			throws XPathExpressionException {
 
 		if (!changesOccurred()) {
 			return null;
 		}
 
-		return getLastScopedChangesInternal(xPathExpression, qName);
+		return getScopedChangesInternal(xPathExpression, qName);
 	}
 
 	@Override
 	public void updateCurrentDOM() {
-		oldNode = currentNode;
+		Node newNode;
 		try {
-			currentNode = newNodeProvider.get();
+			newNode = newNodeProvider.get();
 		} catch (Exception e) {
-			//TODO: check if it is better to throw the error
-			log.warn("Unable to load the next DOM Node. Maybe the source used by the provider ({}) is corrupted?", newNodeProvider);
-			currentNode = null;
+			log.warn("Unable to load the next DOM Node. Maybe the source used by the provider ({}) is corrupted?",
+					newNodeProvider
+			);
+			throw propagate(e);
 		}
+		oldNode = currentNode;
+		currentNode = newNode;
 	}
 
-	private DOMTuple getLastScopedChangesInternal(final String xPathExpression, final QName qName)
+	private DOMTuple getScopedChangesInternal(final String xPathExpression, final QName qName)
 			throws XPathExpressionException {
 
 		Object oldScopedObject = oldNode == null ? null : getScopedObject(oldNode, xPathExpression, qName);
@@ -111,13 +146,13 @@ public class DOMObserverImpl implements DOMObserver {
 		if (null != oldScopedObject && null != currentScopedObject) {
 			// //NODE --> check via isNodeEqual
 			if (XPathConstants.NODE.equals(qName)) {
-				if (((Node) oldScopedObject).isEqualNode((Node) currentNode)) {
+				if (((Node) oldScopedObject).isEqualNode(currentNode)) {
 					return null;
 				}
 
 			}
 			if (XPathConstants.NODESET.equals(qName)) {
-				if (areNodeSetsEqual(oldScopedObject, currentScopedObject)) {
+				if (areNodeSetsEqual((NodeList) oldScopedObject, (NodeList) currentScopedObject)) {
 					return null;
 				}
 			} else {
@@ -141,29 +176,26 @@ public class DOMObserverImpl implements DOMObserver {
 	 * Wraps the nodes so that we have a proper equals method and then use List.containsAll
 	 * for check of equality.
 	 *
-	 * @param oldScopedObject
-	 * @param currentScopedObject
+	 * @param set1
+	 * 		the first set
+	 * @param set2
+	 * 		the second set
 	 *
 	 * @return {@code null} if no change is detected else {@link DOMTuple}
 	 */
-	private boolean areNodeSetsEqual(Object oldScopedObject, Object currentScopedObject) {
+	private boolean areNodeSetsEqual(NodeList set1, NodeList set2) {
 
-		ArrayList<WrappedNode> oldNodes = convertNodeListToHashSet((NodeList) oldScopedObject);
-		ArrayList<WrappedNode> currentNodes = convertNodeListToHashSet((NodeList) currentScopedObject);
-		if (oldNodes.size() == currentNodes.size()) {
-			return oldNodes.containsAll(currentNodes);
-		} else {
-			return false;
-		}
+		List<WrappedNode> oldNodes = convertNodeListToHashSet(set1);
+		List<WrappedNode> currentNodes = convertNodeListToHashSet(set2);
+
+		return oldNodes.size() == currentNodes.size() && oldNodes.containsAll(currentNodes);
 
 	}
 
-	private ArrayList<WrappedNode> convertNodeListToHashSet(NodeList nodeList) {
-		ArrayList<WrappedNode> result = new ArrayList<WrappedNode>();
+	private List<WrappedNode> convertNodeListToHashSet(NodeList nodeList) {
+		List<WrappedNode> result = newArrayList();
 		for (int i = 0; i < nodeList.getLength(); i++) {
-			result.add(new WrappedNode(nodeList.item(i)) {
-			}
-			);
+			result.add(new WrappedNode(nodeList.item(i)));
 		}
 		return result;
 	}
@@ -182,7 +214,7 @@ public class DOMObserverImpl implements DOMObserver {
 
 		@Override
 		public boolean equals(Object obj) {
-			return this.node.isEqualNode(((WrappedNode) obj).getNode());
+			return obj instanceof WrappedNode && this.node.isEqualNode(((WrappedNode) obj).getNode());
 		}
 
 	}

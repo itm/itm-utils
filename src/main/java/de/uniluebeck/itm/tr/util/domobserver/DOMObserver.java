@@ -17,18 +17,29 @@ public interface DOMObserver extends Runnable, Listenable<DOMObserverListener> {
 
 	/**
 	 * Returns the changes since last calling {@link DOMObserver#updateCurrentDOM()}
-	 * @param xPathExpression the scope to inspect
-	 * @param qName type of expected result QName see also {@link XPathConstants}
+	 *
+	 * @param xPathExpression
+	 * 		the scope to inspect
+	 * @param qName
+	 * 		type of expected result QName see also {@link XPathConstants}
+	 *
 	 * @return {@code null} if no changes occurred or a {@link DOMTuple} instance holding the old (scoped) DOM and the new
 	 *         (scoped) DOM otherwise
+	 *
+	 * @throws javax.xml.xpath.XPathExpressionException
+	 * 		if either the XPath expression is invalid or its evaluation results in an exception being thrown
 	 */
-	DOMTuple getLastScopedChanges(final String xPathExpression, final QName qName) throws XPathExpressionException;
+	DOMTuple getScopedChanges(final String xPathExpression, final QName qName) throws XPathExpressionException;
 
 	/**
-	 * Lets the observer "advance in time" by retrieving a new state (e.g. from an XML file stored on disk) and remembering
+	 * Lets the observer "advance in time" by retrieving a new state (e.g. from an XML file stored on disk) and
+	 * remembering
 	 * the current state as the next old state.
-	 * 
+	 *
+	 * @throws Exception
+	 * 		if loading the "next step in time" fails. In this case the DOMObserver will keep its state and not "advance in
+	 * 		time"
 	 */
-	void updateCurrentDOM();
+	void updateCurrentDOM() throws Exception;
 
 }
