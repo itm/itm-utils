@@ -38,7 +38,7 @@ public class DOMObserverImplTest {
 
 	private static final String XPATH_EXPRESSION_ROOT_NODE = "/*";
 
-	private static final String X_PATH_EXPRESSION_APPLICATION_NODES = "//application";
+	private static final String XPATH_EXPRESSION_APPLICATION_NODES = "//application";
 
 	private DOMObserver domObserver;
 
@@ -141,14 +141,31 @@ public class DOMObserverImplTest {
 
 	@Test
 	public void testThatNoChangeIsDetectedWhenBotNotNullAndBothAreEqualScoped() throws Exception {
-		Node node1 = createDOM(CONFIG_1);
-		Node node2 = createDOM(CONFIG_1); // same config for both nodes
-		when(nodeProviderMock.get()).thenReturn(node1).thenReturn(node2);
+
+		// twice the same document but different instances
+		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1)).thenReturn(createDOM(CONFIG_1));
+
 		domObserver.updateCurrentDOM(); //new node is now node1
 		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-		DOMTuple lastScopedChanges =
-				domObserver.getScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
-		assertNull(lastScopedChanges);
+
+		DOMTuple scopedChanges = domObserver.getScopedChanges(
+				XPATH_EXPRESSION_APPLICATION_NODES,
+				XPathConstants.NODESET
+		);
+		assertNull(scopedChanges);
+	}
+
+	@Test
+	public void testThatNoListenersAreNotifiedWhenBotNotNullAndBothAreEqualScoped() throws Exception {
+
+		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1)).thenReturn(createDOM(CONFIG_1));
+		when(listenerMock.getXPathExpression()).thenReturn(XPATH_EXPRESSION_ROOT_NODE);
+		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
+
+		domObserver.updateCurrentDOM(); //new node is now node1
+		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+
+		verify(listenerMock, never()).onDOMChanged(Matchers.<DOMTuple>any());
 	}
 
 	@Test
@@ -159,7 +176,7 @@ public class DOMObserverImplTest {
 		domObserver.updateCurrentDOM(); //new node is now node1
 		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
 		DOMTuple lastScopedChanges =
-				domObserver.getScopedChanges(X_PATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
+				domObserver.getScopedChanges(XPATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
 		assertNotNull(lastScopedChanges);
 		assertNotNull(lastScopedChanges.getFirst());
 		assertNotNull(lastScopedChanges.getSecond());

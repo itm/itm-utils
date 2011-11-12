@@ -82,7 +82,9 @@ public class DOMObserverImpl implements DOMObserver {
 			return;
 		}
 
-		notifyListener(listener, scopedChanges);
+		if (scopedChanges != null) {
+			notifyListener(listener, scopedChanges);
+		}
 	}
 
 	private void notifyListener(final DOMObserverListener listener, final DOMTuple scopedChangesInternal) {
