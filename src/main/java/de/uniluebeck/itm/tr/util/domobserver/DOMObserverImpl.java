@@ -1,8 +1,6 @@
 package de.uniluebeck.itm.tr.util.domobserver;
 
-import com.google.inject.Inject;
 import com.google.inject.Provider;
-import de.uniluebeck.itm.tr.util.ListenerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
@@ -15,24 +13,21 @@ import java.util.List;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Lists.newArrayList;
 
-public class DOMObserverImpl implements DOMObserver {
+class DOMObserverImpl implements DOMObserver {
 
 	private static final Logger log = LoggerFactory.getLogger(DOMObserverImpl.class);
 
-	private ListenerManager<DOMObserverListener> listenerManager;
+	private final DOMObserverListenerManager listenerManager;
 
-	private Node oldNode;
+	private Node currentDOM;
 
-	private Node currentNode;
+	private final Provider<Node> nextDOMProvider;
 
-	private Provider<Node> newNodeProvider;
-
-	@Inject
-	public DOMObserverImpl(final ListenerManager<DOMObserverListener> listenerManager,
-						   final Provider<Node> newNodeProvider) {
+	DOMObserverImpl(final DOMObserverListenerManager listenerManager,
+					final Provider<Node> nextDOMProvider) {
 
 		this.listenerManager = listenerManager;
-		this.newNodeProvider = newNodeProvider;
+		this.nextDOMProvider = nextDOMProvider;
 	}
 
 	@Override
@@ -56,14 +51,10 @@ public class DOMObserverImpl implements DOMObserver {
 			updateCurrentDOM();
 		} catch (Exception e) {
 			notifyDOMLoadFailure(e);
-		}
-
-		if (!changesOccurred()) {
 			return;
 		}
 
 		evaluateXPathExpressionsAndNotifyListeners();
-
 	}
 
 	private void evaluateXPathExpressionsAndNotifyListeners() {
@@ -80,7 +71,8 @@ public class DOMObserverImpl implements DOMObserver {
 		DOMTuple scopedChanges;
 
 		try {
-			scopedChanges = getScopedChangesInternal(xPathExpression, qName);
+			scopedChanges = getScopedChangesInternal(listenerManager.getLastDOM(listener), xPathExpression, qName);
+			listenerManager.updateLastDOM(listener, currentDOM);
 		} catch (XPathExpressionException e) {
 			notifyXPathEvaluationFailure(e);
 			return;
@@ -112,36 +104,37 @@ public class DOMObserverImpl implements DOMObserver {
 	}
 
 	@Override
-	public DOMTuple getScopedChanges(final String xPathExpression, final QName qName)
+	public DOMTuple getScopedChanges(final Node oldDOM, final String xPathExpression, final QName qName)
 			throws XPathExpressionException {
 
-		if (!changesOccurred()) {
+		if (!changesOccurred(oldDOM)) {
 			return null;
 		}
 
-		return getScopedChangesInternal(xPathExpression, qName);
+		return getScopedChangesInternal(oldDOM, xPathExpression, qName);
 	}
 
 	@Override
-	public void updateCurrentDOM() {
-		Node newNode;
+	public DOMTuple updateCurrentDOM() {
+		Node newDOM;
 		try {
-			newNode = newNodeProvider.get();
+			newDOM = nextDOMProvider.get();
 		} catch (Exception e) {
 			log.warn("Unable to load the next DOM Node. Maybe the source used by the provider ({}) is corrupted?",
-					newNodeProvider
+					nextDOMProvider
 			);
 			throw propagate(e);
 		}
-		oldNode = currentNode;
-		currentNode = newNode;
+		Node oldDOM = currentDOM;
+		currentDOM = newDOM;
+		return new DOMTuple(oldDOM, currentDOM);
 	}
 
-	private DOMTuple getScopedChangesInternal(final String xPathExpression, final QName qName)
+	private DOMTuple getScopedChangesInternal(final Node oldDOM, final String xPathExpression, final QName qName)
 			throws XPathExpressionException {
 
-		Object oldScopedObject = oldNode == null ? null : getScopedObject(oldNode, xPathExpression, qName);
-		Object currentScopedObject = currentNode == null ? null : getScopedObject(currentNode, xPathExpression, qName);
+		Object oldScopedObject = oldDOM == null ? null : getScopedObject(oldDOM, xPathExpression, qName);
+		Object currentScopedObject = currentDOM == null ? null : getScopedObject(currentDOM, xPathExpression, qName);
 
 		// both objects null -->no change
 		if (null == oldScopedObject && null == currentScopedObject) {
@@ -152,7 +145,7 @@ public class DOMObserverImpl implements DOMObserver {
 		if (null != oldScopedObject && null != currentScopedObject) {
 			// //NODE --> check via isNodeEqual
 			if (XPathConstants.NODE.equals(qName)) {
-				if (((Node) oldScopedObject).isEqualNode(currentNode)) {
+				if (((Node) oldScopedObject).isEqualNode(currentDOM)) {
 					return null;
 				}
 
@@ -235,12 +228,12 @@ public class DOMObserverImpl implements DOMObserver {
 		return expression.evaluate(node, qName);
 	}
 
-	private boolean changesOccurred() {
+	private boolean changesOccurred(final Node oldDOM) {
 
-		boolean sameInstance = oldNode == currentNode;
-		boolean oldIsNullCurrentIsNot = oldNode == null && currentNode != null;
-		boolean oldIsNonNullCurrentIs = oldNode != null && currentNode == null;
-		boolean nodeTreesEqual = oldNode != null && currentNode != null && oldNode.isEqualNode(currentNode);
+		boolean sameInstance = oldDOM == currentDOM;
+		boolean oldIsNullCurrentIsNot = oldDOM == null && currentDOM != null;
+		boolean oldIsNonNullCurrentIs = oldDOM != null && currentDOM == null;
+		boolean nodeTreesEqual = oldDOM != null && currentDOM != null && oldDOM.isEqualNode(currentDOM);
 
 		return !sameInstance && (oldIsNullCurrentIsNot || oldIsNonNullCurrentIs || !nodeTreesEqual);
 	}

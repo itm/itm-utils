@@ -1,15 +1,12 @@
 package de.uniluebeck.itm.tr.util.domobserver;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import de.uniluebeck.itm.tr.util.ListenerManager;
-import de.uniluebeck.itm.tr.util.ListenerManagerImpl;
 import de.uniluebeck.itm.tr.util.Logging;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -48,21 +45,15 @@ public class DOMObserverImplTest {
 	@Mock
 	private DOMObserverListener listenerMock;
 
+	@Mock
+	private DOMObserverListener listenerMock2;
+
 	@Before
 	public void setUp() throws Exception {
-		domObserver = Guice.createInjector(new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(new TypeLiteral<ListenerManager<DOMObserverListener>>() {
-				}
-				).to(new TypeLiteral<ListenerManagerImpl<DOMObserverListener>>() {
-				}
-				);
-				bind(Node.class).toProvider(nodeProviderMock);
-				bind(DOMObserver.class).to(DOMObserverImpl.class);
-			}
-		}
-		).getInstance(DOMObserver.class);
+		DOMObserverFactory factory = Guice
+				.createInjector(new DOMObserverModule())
+				.getInstance(DOMObserverFactory.class);
+		domObserver = factory.create(nodeProviderMock);
 	}
 
 	@Test
@@ -72,10 +63,10 @@ public class DOMObserverImplTest {
 		when(nodeProviderMock.get()).thenReturn(null);
 
 		// act
-		domObserver.updateCurrentDOM();
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst();
 
 		// validate
-		assertNull(domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
+		assertNull(domObserver.getScopedChanges(oldDOM, XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
 	}
 
 	@Test
@@ -84,9 +75,13 @@ public class DOMObserverImplTest {
 		Node node = createDOM(CONFIG_1);
 		when(nodeProviderMock.get()).thenReturn(node);
 
-		domObserver.updateCurrentDOM();
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst();
 
-		DOMTuple lastScopedChanges = domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		DOMTuple lastScopedChanges = domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		);
 		assertNull(lastScopedChanges.getFirst());
 		assertTrue(node.isEqualNode((Node) lastScopedChanges.getSecond()));
 	}
@@ -101,17 +96,25 @@ public class DOMObserverImplTest {
 
 	@Test
 	public void testThatChangeIsDetectedWhenOldIsNotNullButNewIsNull() throws Exception {
+
 		Node node1 = createDOM(CONFIG_1);
 		when(nodeProviderMock.get()).thenReturn(node1).thenReturn(null);
-		domObserver.updateCurrentDOM(); //new node is now node1
-		domObserver.updateCurrentDOM(); //new node is now null old node is node1
 
-		DOMTuple lastScopedChanges = domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		DOMTuple domTuple = domObserver.updateCurrentDOM();
+		assertNull(domTuple.getFirst());
+		assertNotNull(domTuple.getSecond());
+
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst(); // old is now node1 and current is null
+
+		DOMTuple lastScopedChanges = domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		);
+
 		assertNotNull(lastScopedChanges);
 		assertNotNull(lastScopedChanges.getFirst());
 		assertNull(lastScopedChanges.getSecond());
-
-
 	}
 
 	@Test
@@ -120,8 +123,12 @@ public class DOMObserverImplTest {
 		Node node2 = createDOM(CONFIG_1); // same config for both nodes
 		when(nodeProviderMock.get()).thenReturn(node1).thenReturn(node2);
 		domObserver.updateCurrentDOM(); //new node is now node1
-		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-		DOMTuple lastScopedChanges = domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges = domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		);
 		assertNull(lastScopedChanges);
 
 	}
@@ -132,8 +139,12 @@ public class DOMObserverImplTest {
 		Node node2 = createDOM(CONFIG_2); //now the configs differ
 		when(nodeProviderMock.get()).thenReturn(node1).thenReturn(node2);
 		domObserver.updateCurrentDOM(); //new node is now node1
-		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-		DOMTuple lastScopedChanges = domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE);
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges = domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		);
 		assertNotNull(lastScopedChanges);
 		assertNotNull(lastScopedChanges.getFirst());
 		assertFalse(((Node) lastScopedChanges.getFirst()).isEqualNode((Node) lastScopedChanges.getSecond()));
@@ -146,9 +157,10 @@ public class DOMObserverImplTest {
 		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1)).thenReturn(createDOM(CONFIG_1));
 
 		domObserver.updateCurrentDOM(); //new node is now node1
-		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst(); //new node is now node2 old node is node1
 
 		DOMTuple scopedChanges = domObserver.getScopedChanges(
+				oldDOM,
 				XPATH_EXPRESSION_APPLICATION_NODES,
 				XPathConstants.NODESET
 		);
@@ -159,8 +171,7 @@ public class DOMObserverImplTest {
 	public void testThatNoListenersAreNotifiedWhenBotNotNullAndBothAreEqualScoped() throws Exception {
 
 		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1)).thenReturn(createDOM(CONFIG_1));
-		when(listenerMock.getXPathExpression()).thenReturn(XPATH_EXPRESSION_ROOT_NODE);
-		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
+		subscribeToRootNode(listenerMock);
 
 		domObserver.updateCurrentDOM(); //new node is now node1
 		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
@@ -174,9 +185,12 @@ public class DOMObserverImplTest {
 		Node node2 = createDOM(CONFIG_2); //now the configs differ
 		when(nodeProviderMock.get()).thenReturn(node1).thenReturn(node2);
 		domObserver.updateCurrentDOM(); //new node is now node1
-		domObserver.updateCurrentDOM(); //new node is now node2 old node is node1
-		DOMTuple lastScopedChanges =
-				domObserver.getScopedChanges(XPATH_EXPRESSION_APPLICATION_NODES, XPathConstants.NODESET);
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst(); //new node is now node2 old node is node1
+		DOMTuple lastScopedChanges = domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_APPLICATION_NODES,
+				XPathConstants.NODESET
+		);
 		assertNotNull(lastScopedChanges);
 		assertNotNull(lastScopedChanges.getFirst());
 		assertNotNull(lastScopedChanges.getSecond());
@@ -199,21 +213,27 @@ public class DOMObserverImplTest {
 		Node config1DOM = createDOM(CONFIG_1);
 		when(nodeProviderMock.get()).thenReturn(config1DOM);
 		domObserver.updateCurrentDOM();
-		domObserver.updateCurrentDOM();
-		assertNull(domObserver.getScopedChanges(XPATH_EXPRESSION_ROOT_NODE, XPathConstants.NODE));
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst();
+		assertNull(domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		)
+		);
 	}
 
 	@Test
 	public void testThatNoListenersAreCalledIfProviderDeliversSameInstanceAgain() throws Exception {
+
 		Node config1DOM = createDOM(CONFIG_1);
 		when(nodeProviderMock.get()).thenReturn(config1DOM);
-		DOMObserverListener listenerMock = mock(DOMObserverListener.class);
-		when(listenerMock.getXPathExpression()).thenReturn(XPATH_EXPRESSION_ROOT_NODE);
-		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
-		domObserver.addListener(listenerMock);
+		subscribeToRootNode(listenerMock);
+
 		domObserver.run();
 		verify(listenerMock, times(1)).onDOMChanged(Matchers.<DOMTuple>any());
+
 		reset(listenerMock);
+		setRootNodeSubscriptionBehaviour(listenerMock);
 		domObserver.run();
 		verify(listenerMock, never()).onDOMChanged(Matchers.<DOMTuple>any());
 	}
@@ -230,9 +250,7 @@ public class DOMObserverImplTest {
 	public void testThatListenersAreNotifiedIfProviderThrowsException() throws Exception {
 
 		when(nodeProviderMock.get()).thenThrow(new RuntimeException("Test"));
-		when(listenerMock.getXPathExpression()).thenReturn(XPATH_EXPRESSION_ROOT_NODE);
-		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
-		domObserver.addListener(listenerMock);
+		subscribeToRootNode(listenerMock);
 
 		domObserver.run();
 
@@ -244,15 +262,14 @@ public class DOMObserverImplTest {
 
 		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1));
 
-		domObserver.updateCurrentDOM();
-		domObserver.getScopedChanges("hello, world", XPathConstants.NODE);
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst();
+		domObserver.getScopedChanges(oldDOM, "hello, world", XPathConstants.NODE);
 	}
 
 	@Test
 	public void testThatListenersAreNotifiedIfXPathExpressionIsInvalid() throws Exception {
 
-		Node config1DOM = createDOM(CONFIG_1);
-		when(nodeProviderMock.get()).thenReturn(config1DOM);
+		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1));
 
 		when(listenerMock.getXPathExpression()).thenReturn("hello, world");
 		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
@@ -266,7 +283,8 @@ public class DOMObserverImplTest {
 	/**
 	 * https://github.com/itm/itm-utils/issues/26
 	 *
-	 * @throws Exception if an error occurs or the test fails
+	 * @throws Exception
+	 * 		if the test fails
 	 */
 	@Test
 	public void testNoLoadingAndEvaluationWillBeDoneUnlessAtLeastOneListenerIsRegistered() throws Exception {
@@ -277,5 +295,68 @@ public class DOMObserverImplTest {
 		domObserver.addListener(listenerMock);
 		domObserver.run();
 		verify(nodeProviderMock).get();
+	}
+
+	/**
+	 * https://github.com/itm/itm-utils/issues/27
+	 *
+	 * @throws Exception
+	 * 		if the test fails
+	 */
+	@Test
+	public void testIfListenerGetsFullDiffToNullStateEvenIfNoChangesOccurred() throws Exception {
+
+		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1));
+		Node oldDOM = (Node) domObserver.updateCurrentDOM().getFirst();
+		domObserver.getScopedChanges(
+				oldDOM,
+				XPATH_EXPRESSION_ROOT_NODE,
+				XPathConstants.NODE
+		);
+
+		subscribeToRootNode(listenerMock);
+		domObserver.run();
+
+		ArgumentCaptor<DOMTuple> argumentCaptor = ArgumentCaptor.forClass(DOMTuple.class);
+		verify(listenerMock).onDOMChanged(argumentCaptor.capture());
+		assertNull(argumentCaptor.getValue().getFirst());
+		assertNotNull(argumentCaptor.getValue().getSecond());
+	}
+
+	/**
+	 * https://github.com/itm/itm-utils/issues/27
+	 *
+	 * @throws Exception
+	 * 		if the test fails
+	 */
+	@Test
+	public void testIfSecondListenerGetsFullDiffAlthoughFirstListenerGetsNone() throws Exception {
+
+		when(nodeProviderMock.get()).thenReturn(createDOM(CONFIG_1));
+
+		subscribeToRootNode(listenerMock);
+		domObserver.run();
+
+		subscribeToRootNode(listenerMock2);
+		domObserver.run();
+
+		// assert listenerMock1 still has only one invocation (the one from before)
+		verify(listenerMock).onDOMChanged(Matchers.<DOMTuple>any());
+
+		// check if listenerMock2 has been notified
+		ArgumentCaptor<DOMTuple> argumentCaptorListener2 = ArgumentCaptor.forClass(DOMTuple.class);
+		verify(listenerMock2).onDOMChanged(argumentCaptorListener2.capture());
+		assertNull(argumentCaptorListener2.getValue().getFirst());
+		assertNotNull(argumentCaptorListener2.getValue().getSecond());
+	}
+
+	private void subscribeToRootNode(final DOMObserverListener listenerMock) {
+		setRootNodeSubscriptionBehaviour(listenerMock);
+		domObserver.addListener(listenerMock);
+	}
+
+	private void setRootNodeSubscriptionBehaviour(final DOMObserverListener listenerMock) {
+		when(listenerMock.getXPathExpression()).thenReturn(XPATH_EXPRESSION_ROOT_NODE);
+		when(listenerMock.getQName()).thenReturn(XPathConstants.NODE);
 	}
 }
