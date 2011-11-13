@@ -48,6 +48,10 @@ public class DOMObserverImpl implements DOMObserver {
 	@Override
 	public void run() {
 
+		if (listenerManager.getListeners().isEmpty()) {
+			return;
+		}
+
 		try {
 			updateCurrentDOM();
 		} catch (Exception e) {

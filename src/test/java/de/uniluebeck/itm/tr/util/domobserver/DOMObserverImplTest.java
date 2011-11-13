@@ -262,4 +262,20 @@ public class DOMObserverImplTest {
 
 		verify(listenerMock).onXPathEvaluationFailure(Matchers.<XPathExpressionException>any());
 	}
+
+	/**
+	 * https://github.com/itm/itm-utils/issues/26
+	 *
+	 * @throws Exception if an error occurs or the test fails
+	 */
+	@Test
+	public void testNoLoadingAndEvaluationWillBeDoneUnlessAtLeastOneListenerIsRegistered() throws Exception {
+
+		domObserver.run();
+		verify(nodeProviderMock, never()).get();
+
+		domObserver.addListener(listenerMock);
+		domObserver.run();
+		verify(nodeProviderMock).get();
+	}
 }
