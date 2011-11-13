@@ -28,8 +28,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * An immutable tuple type that takes two elements of type {@code V} and type {@code W}.
  *
- * @param <V> the type of the first element of the tuple
- * @param <W> the type of the second element of the tuple
+ * @param <V>
+ * 		the type of the first element of the tuple
+ * @param <W>
+ * 		the type of the second element of the tuple
  */
 public class Tuple<V, W> {
 
@@ -46,8 +48,10 @@ public class Tuple<V, W> {
 	/**
 	 * Constructs a new immutable tuple.
 	 *
-	 * @param first  the first element of the tuple
-	 * @param second the second element of the tuple
+	 * @param first
+	 * 		the first element of the tuple
+	 * @param second
+	 * 		the second element of the tuple
 	 */
 	public Tuple(V first, W second) {
 
@@ -58,6 +62,10 @@ public class Tuple<V, W> {
 		this.second = second;
 	}
 
+	/**
+	 * Constructor for subclasses that may have either additional arguments or different semantics such as allowing {@code
+	 * null} instances.
+	 */
 	protected Tuple() {
 		// nothing to do
 	}
