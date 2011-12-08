@@ -30,10 +30,15 @@ class DOMObserverListenerManagerImpl implements DOMObserverListenerManager {
 
 	@Override
 	public void updateLastDOM(final DOMObserverListener listener, final Node updatedDOM) {
-		if (!listenerMap.containsKey(listener)) {
-			throw new IllegalArgumentException("The listener instance " + listener + " was not yet registered!");
+		listenerMapLock.lock();
+		try {
+			if (!listenerMap.containsKey(listener)) {
+				throw new IllegalArgumentException("The listener instance " + listener + " was not yet registered!");
+			}
+			listenerMap.put(listener, updatedDOM);
+		} finally {
+			listenerMapLock.unlock();
 		}
-		listenerMap.put(listener, updatedDOM);
 	}
 
 	@Override
