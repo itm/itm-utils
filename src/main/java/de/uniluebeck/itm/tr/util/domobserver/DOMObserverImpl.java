@@ -65,21 +65,24 @@ class DOMObserverImpl implements DOMObserver {
 
 	private void evaluateXPathExpressionAndNotify(final DOMObserverListener listener) {
 
-		String xPathExpression = listener.getXPathExpression();
-		QName qName = listener.getQName();
+		if (listenerManager.getLastDOM(listener) != currentDOM) {
 
-		DOMTuple scopedChanges;
+			String xPathExpression = listener.getXPathExpression();
+			QName qName = listener.getQName();
 
-		try {
-			scopedChanges = getScopedChangesInternal(listenerManager.getLastDOM(listener), xPathExpression, qName);
-			listenerManager.updateLastDOM(listener, currentDOM);
-		} catch (XPathExpressionException e) {
-			notifyXPathEvaluationFailure(e);
-			return;
-		}
+			DOMTuple scopedChanges;
 
-		if (scopedChanges != null) {
-			notifyListener(listener, scopedChanges);
+			try {
+				scopedChanges = getScopedChangesInternal(listenerManager.getLastDOM(listener), xPathExpression, qName);
+				listenerManager.updateLastDOM(listener, currentDOM);
+			} catch (XPathExpressionException e) {
+				notifyXPathEvaluationFailure(e);
+				return;
+			}
+
+			if (scopedChanges != null) {
+				notifyListener(listener, scopedChanges);
+			}
 		}
 	}
 
