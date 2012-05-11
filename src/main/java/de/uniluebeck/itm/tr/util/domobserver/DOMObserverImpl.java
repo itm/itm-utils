@@ -86,9 +86,14 @@ class DOMObserverImpl implements DOMObserver {
 		}
 	}
 
-	private void notifyListener(final DOMObserverListener listener, final DOMTuple scopedChangesInternal) {
+	private void notifyListener(final DOMObserverListener listener, final DOMTuple scopedChanges) {
+
+		if (log.isDebugEnabled()) {
+			log.debug("Notifying listener {} of changes {}", listener, scopedChanges);
+		}
+
 		try {
-			listener.onDOMChanged(scopedChangesInternal);
+			listener.onDOMChanged(scopedChanges);
 		} catch (Exception e) {
 			log.warn("Exception occurred while calling {} listener: {}", listener, e);
 		}
