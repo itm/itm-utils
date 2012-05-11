@@ -9,7 +9,7 @@ public class CachingConvertingFileProvider<T> implements Provider<T> {
 
 	private final Function<File, T> conversionFunction;
 
-	private final File file;
+	private File file;
 
 	private transient long lastFileTimestamp = Long.MIN_VALUE;
 
@@ -21,10 +21,14 @@ public class CachingConvertingFileProvider<T> implements Provider<T> {
 	}
 
 	@Override
-	public T get() {
+	public synchronized T get() {
 
 		if (!file.exists()) {
-			throw new RuntimeException("File " + file.getAbsolutePath() + " does not exist!");
+			// retry once by creating new File object
+			file = new File(file.getAbsolutePath());
+			if (!file.exists())
+				throw new RuntimeException("File " + file.getAbsolutePath()
+						+ " does not exist! Retry failed.");
 		}
 
 		if (!file.canRead()) {
