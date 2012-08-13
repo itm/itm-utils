@@ -1,14 +1,11 @@
 package de.uniluebeck.itm.tr.util;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ExecutionList;
 
 import javax.annotation.Nullable;
-
 import java.util.concurrent.Executor;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 public class ProgressSettableFuture<V> extends AbstractFuture<V> {
 
