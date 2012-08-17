@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class ProgressSettableFuture<V> extends AbstractFuture<V> {
+public class ProgressSettableFuture<V> extends AbstractFuture<V> implements ProgressListenableFuture<V> {
 
 	public static <V> ProgressSettableFuture<V> create() {
 		return new ProgressSettableFuture<V>();
@@ -49,10 +49,12 @@ public class ProgressSettableFuture<V> extends AbstractFuture<V> {
 		return setProgressInternal(progress);
 	}
 
+	@Override
 	public float getProgress() {
 		return this.progress;
 	}
 
+	@Override
 	public void addProgressListener(final Runnable runnable, final Executor executor) {
 
 		if (isDone()) {
