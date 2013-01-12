@@ -26,10 +26,11 @@ package de.uniluebeck.itm.tr.util;
 import com.google.classpath.ClassPath;
 import com.google.classpath.ClassPathFactory;
 import org.apache.log4j.*;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.util.Properties;
-import java.util.Set;
+import java.util.logging.Handler;
 
 /**
  * Helper class to set logging defaults for log4j in a running JVM.
@@ -111,6 +112,13 @@ public class Logging {
 			Logger.getRootLogger().addAppender(appender);
 		}
 		Logger.getRootLogger().setLevel(level);
+
+		java.util.logging.Logger rootLogger = java.util.logging.LogManager.getLogManager().getLogger("");
+		Handler[] handlers = rootLogger.getHandlers();
+		for (final Handler handler : handlers) {
+			rootLogger.removeHandler(handler);
+		}
+		SLF4JBridgeHandler.install();
 	}
 
 	/**
