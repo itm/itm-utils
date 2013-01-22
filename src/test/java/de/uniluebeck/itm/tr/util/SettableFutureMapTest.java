@@ -207,6 +207,45 @@ public class SettableFutureMapTest {
 	}
 
 	@Test
+	public void testListenerOnMapWithOneFailedEntryIsNotified() throws Exception {
+
+		map(mapWithOneIncompleteEntry).addListener(listener, STE);
+		verify(listener, never()).run();
+
+		incompleteFuture1.setException(new Exception());
+		verify(listener).run();
+	}
+
+	@Test
+	public void testListenerOnMapWithMultipleFailedEntriesIsNotified() throws Exception {
+
+		map(mapWithMultipleIncompleteEntries).addListener(listener, STE);
+		verify(listener, never()).run();
+
+		incompleteFuture1.setException(new Exception());
+		verify(listener, never()).run();
+
+		incompleteFuture2.setException(new Exception());
+		verify(listener, never()).run();
+
+		incompleteFuture3.setException(new Exception());
+		verify(listener).run();
+	}
+
+	@Test
+	public void testListenerOnMapWithSomeSuccessfulAndSomeFailedFuturesIsNotified() throws Exception {
+
+		map(mapWithMultipleEntriesAndTwoIncompleteEntries).addListener(listener, STE);
+		verify(listener, never()).run();
+
+		incompleteFuture2.set(new Object());
+		verify(listener, never()).run();
+
+		incompleteFuture3.setException(new Exception());
+		verify(listener).run();
+	}
+
+	@Test
 	public void testMapReturnedContainsSameValuesAsEntryFutures() throws Exception {
 
 		final SettableFutureMap<Object, Object> map = map(mapWithMultipleCompleteEntries);
