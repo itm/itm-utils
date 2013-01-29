@@ -100,6 +100,8 @@ public class Logging {
 	 */
 	public static void setLoggingDefaults(final Level level, final Appender... appenders) {
 
+		Logger.getRootLogger().removeAllAppenders();
+
 		if (tryToLoadFromSystemProperty()) {
 			return;
 		}
