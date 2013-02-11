@@ -39,18 +39,16 @@ public class SecureIdGenerator {
 
 			StringBuilder builder = new StringBuilder();
 
-			for (int i = 0; i < 1; i++) {
-				MessageDigest m = MessageDigest.getInstance("MD5");
-				byte[] data = Long.valueOf(random.nextLong()).toString().getBytes();
-				m.update(data, 0, data.length);
-				BigInteger t = new BigInteger(1, m.digest());
-				builder.append(String.format("%1$032X", t));
-			}
+			MessageDigest m = MessageDigest.getInstance("MD5");
+			byte[] data = Long.valueOf(random.nextLong()).toString().getBytes();
+			m.update(data, 0, data.length);
+			BigInteger t = new BigInteger(1, m.digest());
+			builder.append(String.format("%1$032X", t));
 
 			return builder.toString();
 
-		} catch (NoSuchAlgorithmException nsae) {
-			throw new RuntimeException("NoSuchAlgorithmException while trying to generate an MD5 hash!", nsae);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("NoSuchAlgorithmException while trying to generate an MD5 hash!", e);
 		}
 	}
 
