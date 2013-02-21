@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
+import java.util.Random;
 
 public abstract class NetworkUtils {
 
@@ -60,4 +62,21 @@ public abstract class NetworkUtils {
 		}
 	}
 
+	public static int findFreePort() {
+		Random random = new Random();
+		boolean foundPort = false;
+		int port = 0;
+		ServerSocket socket = null;
+		while (!foundPort) {
+			try {
+				port = random.nextInt(((int) Math.pow(2, 16)) - 1024) + 1024;
+				socket = new ServerSocket(port);
+				socket.close();
+				foundPort = true;
+			} catch (IOException e) {
+				// go on searching for another port
+			}
+		}
+		return port;
+	}
 }
