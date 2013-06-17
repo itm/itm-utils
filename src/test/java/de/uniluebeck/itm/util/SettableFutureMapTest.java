@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Map;
@@ -15,8 +16,6 @@ import java.util.Map;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("FieldCanBeLocal")
@@ -115,31 +114,31 @@ public class SettableFutureMapTest {
 
 	@Test
 	public void testEmptyMapIsDoneImmediately() throws Exception {
-		Assert.assertTrue(map(EMPTY_MAP).isDone());
+		assertTrue(map(EMPTY_MAP).isDone());
 	}
 
 	@Test
 	public void testMapWithOneEntryIsDoneIfEntryIsDone()
 			throws Exception {
-		Assert.assertTrue(map(mapWithOneCompleteEntry).isDone());
+		assertTrue(map(mapWithOneCompleteEntry).isDone());
 	}
 
 	@Test
 	public void testMapWithOneEntryIsNotDoneIfEntryIsNotDone()
 			throws Exception {
-		Assert.assertFalse(map(mapWithOneIncompleteEntry).isDone());
+		assertFalse(map(mapWithOneIncompleteEntry).isDone());
 	}
 
 	@Test
 	public void testMapWithMultipleEntriesIsDoneWhenAllAreDone()
 			throws Exception {
-		Assert.assertTrue(map(mapWithMultipleCompleteEntries).isDone());
+		assertTrue(map(mapWithMultipleCompleteEntries).isDone());
 	}
 
 	@Test
 	public void testMapWithMultipleEntriesIsNotDoneIfOneEntryIsNotDone()
 			throws Exception {
-		Assert.assertFalse(map(mapWithMultipleEntriesAndOneIncompleteEntry).isDone());
+		assertFalse(map(mapWithMultipleEntriesAndOneIncompleteEntry).isDone());
 	}
 
 	@Test
@@ -250,9 +249,9 @@ public class SettableFutureMapTest {
 
 		final SettableFutureMap<Object, Object> map = map(mapWithMultipleCompleteEntries);
 
-		Assert.assertSame(map.get().get(KEY_1), v1);
-		Assert.assertSame(map.get().get(KEY_2), v2);
-		Assert.assertSame(map.get().get(KEY_3), v3);
+		assertSame(map.get().get(KEY_1), v1);
+		assertSame(map.get().get(KEY_2), v2);
+		assertSame(map.get().get(KEY_3), v3);
 	}
 
 	private SettableFutureMap<Object, Object> map(

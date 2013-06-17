@@ -19,42 +19,42 @@ public class RateLimiterUnitTest {
 	public void checkIfAllPassedObjectsSuccessfullyApprovedInOneSlot() {
 		rateLimiter = new RateLimiterImpl(10, slotLength, timeUnit);
 		for (int i = 0; i < 10; i++) {
-			Assert.assertTrue(rateLimiter.checkIfInSlotAndCount());
-			Assert.assertTrue(rateLimiter.approvedCount() == i + 1);
-			Assert.assertTrue(rateLimiter.dismissedCount() == 0);
+			assertTrue(rateLimiter.checkIfInSlotAndCount());
+			assertTrue(rateLimiter.approvedCount() == i + 1);
+			assertTrue(rateLimiter.dismissedCount() == 0);
 		}
-		Assert.assertTrue(rateLimiter.approvedCount() == 10);
-		Assert.assertTrue(rateLimiter.dismissedCount() == 0);
+		assertTrue(rateLimiter.approvedCount() == 10);
+		assertTrue(rateLimiter.dismissedCount() == 0);
 	}
 
 	@Test
 	public void checkIfAllPassedObjectsDismissesInOneSlot() {
 		rateLimiter = new RateLimiterImpl(0, slotLength, timeUnit);
 		for (int i = 0; i < 10; i++) {
-			Assert.assertFalse(rateLimiter.checkIfInSlotAndCount());
-			Assert.assertTrue(rateLimiter.dismissedCount() == i + 1);
-			Assert.assertTrue(rateLimiter.approvedCount() == 0);
+			assertFalse(rateLimiter.checkIfInSlotAndCount());
+			assertTrue(rateLimiter.dismissedCount() == i + 1);
+			assertTrue(rateLimiter.approvedCount() == 0);
 		}
-		Assert.assertTrue(rateLimiter.dismissedCount() == 10);
-		Assert.assertTrue(rateLimiter.approvedCount() == 0);
+		assertTrue(rateLimiter.dismissedCount() == 10);
+		assertTrue(rateLimiter.approvedCount() == 0);
 	}
 
 	@Test
 	public void checkIfAllPassedObjectsSuccessfullyApprovedForTwoSlots() throws InterruptedException {
 		rateLimiter = new RateLimiterImpl(10, slotLength, timeUnit);
 		for (int i = 0; i < 10; i++) {
-			Assert.assertTrue(rateLimiter.checkIfInSlotAndCount());
-			Assert.assertTrue(rateLimiter.approvedCount() == i + 1);
-			Assert.assertTrue(rateLimiter.dismissedCount() == 0);
+			assertTrue(rateLimiter.checkIfInSlotAndCount());
+			assertTrue(rateLimiter.approvedCount() == i + 1);
+			assertTrue(rateLimiter.dismissedCount() == 0);
 		}
-		Assert.assertFalse(rateLimiter.checkIfInSlotAndCount());
-		Assert.assertTrue(rateLimiter.dismissedCount() == 1);
+		assertFalse(rateLimiter.checkIfInSlotAndCount());
+		assertTrue(rateLimiter.dismissedCount() == 1);
 		//move on to next slot
 		rateLimiter.nextSlot();
 		for (int i = 0; i < 10; i++) {
-			Assert.assertTrue(rateLimiter.checkIfInSlotAndCount());
-			Assert.assertTrue(rateLimiter.approvedCount() == i + 1);
-			Assert.assertTrue(rateLimiter.dismissedCount() == 0);
+			assertTrue(rateLimiter.checkIfInSlotAndCount());
+			assertTrue(rateLimiter.approvedCount() == i + 1);
+			assertTrue(rateLimiter.dismissedCount() == 0);
 		}
 	}
 

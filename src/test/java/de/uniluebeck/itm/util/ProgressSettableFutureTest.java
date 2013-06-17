@@ -3,12 +3,8 @@ package de.uniluebeck.itm.util;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class ProgressSettableFutureTest {
 
@@ -17,23 +13,23 @@ public class ProgressSettableFutureTest {
 
 		ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
 
-		final Runnable mock1 = Mockito.mock(Runnable.class);
-		final Runnable mock2 = Mockito.mock(Runnable.class);
+		final Runnable mock1 = mock(Runnable.class);
+		final Runnable mock2 = mock(Runnable.class);
 
 		future.addProgressListener(mock1, MoreExecutors.sameThreadExecutor());
 		future.addProgressListener(mock2, MoreExecutors.sameThreadExecutor());
 
 		future.setProgress(0.1f);
-		Mockito.verify(mock1, Mockito.times(1)).run();
-		Mockito.verify(mock2, Mockito.times(1)).run();
+		verify(mock1, times(1)).run();
+		verify(mock2, times(1)).run();
 
 		future.setProgress(0.2f);
-		Mockito.verify(mock1, Mockito.times(2)).run();
-		Mockito.verify(mock2, Mockito.times(2)).run();
+		verify(mock1, times(2)).run();
+		verify(mock2, times(2)).run();
 
 		future.setProgress(0.3f);
-		Mockito.verify(mock1, Mockito.times(3)).run();
-		Mockito.verify(mock2, Mockito.times(3)).run();
+		verify(mock1, times(3)).run();
+		verify(mock2, times(3)).run();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -53,14 +49,14 @@ public class ProgressSettableFutureTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testIfNullPointerExceptionIsThrownIfExecutorIsNullWhenProgressListenerIsAdded() throws Exception {
-		ProgressSettableFuture.<Void>create().addProgressListener(Mockito.mock(Runnable.class), null);
+		ProgressSettableFuture.<Void>create().addProgressListener(mock(Runnable.class), null);
 	}
 
 	@Test
 	public void testThatProgressCantBeModifiedAfterFutureIsComplete() throws Exception {
 		final ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
 		future.set(null);
-		Assert.assertFalse(future.setProgress(0.9f));
+		assertFalse(future.setProgress(0.9f));
 	}
 
 	@Test
@@ -68,16 +64,16 @@ public class ProgressSettableFutureTest {
 
 		final ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
 
-		final Runnable mock1 = Mockito.mock(Runnable.class);
-		final Runnable mock2 = Mockito.mock(Runnable.class);
+		final Runnable mock1 = mock(Runnable.class);
+		final Runnable mock2 = mock(Runnable.class);
 
 		future.addProgressListener(mock1, MoreExecutors.sameThreadExecutor());
 		future.addProgressListener(mock2, MoreExecutors.sameThreadExecutor());
 
-		Assert.assertTrue(future.set(null));
+		assertTrue(future.set(null));
 
-		Mockito.verify(mock1, Mockito.times(1)).run();
-		Mockito.verify(mock2, Mockito.times(1)).run();
+		verify(mock1, times(1)).run();
+		verify(mock2, times(1)).run();
 	}
 
 	@Test
@@ -85,29 +81,29 @@ public class ProgressSettableFutureTest {
 
 		final ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
 
-		final Runnable mock1 = Mockito.mock(Runnable.class);
-		final Runnable mock2 = Mockito.mock(Runnable.class);
+		final Runnable mock1 = mock(Runnable.class);
+		final Runnable mock2 = mock(Runnable.class);
 
 		future.addProgressListener(mock1, MoreExecutors.sameThreadExecutor());
 		future.addProgressListener(mock2, MoreExecutors.sameThreadExecutor());
 
-		Assert.assertTrue(future.setException(Mockito.mock(Throwable.class)));
+		assertTrue(future.setException(mock(Throwable.class)));
 
-		Mockito.verify(mock1, Mockito.times(1)).run();
-		Mockito.verify(mock2, Mockito.times(1)).run();
+		verify(mock1, times(1)).run();
+		verify(mock2, times(1)).run();
 	}
 
 	@Test
 	public void testThatProgressIsOneIfFutureIsCompletedWithoutError() throws Exception {
 		final ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
-		Assert.assertTrue(future.set(null));
+		assertTrue(future.set(null));
 		assertEquals(1f, future.getProgress(), 0f);
 	}
 
 	@Test
 	public void testThatProgressIsOneIfFutureIsCompletedWithError() throws Exception {
 		final ProgressSettableFuture<Void> future = ProgressSettableFuture.create();
-		Assert.assertTrue(future.set(null));
+		assertTrue(future.set(null));
 		assertEquals(1f, future.getProgress(), 0f);
 	}
 }

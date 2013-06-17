@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static org.junit.Assert.*;
+
 
 public abstract class PersistentQueueUnitTest {
 
@@ -30,8 +32,8 @@ public abstract class PersistentQueueUnitTest {
 	@Test
 	public void testNewQueueIsEmpty() {
 		if (queue.isEmpty()) {
-			Assert.assertTrue(queue.isEmpty());
-			Assert.assertEquals(queue.size(), 0);
+			assertTrue(queue.isEmpty());
+			assertEquals(queue.size(), 0);
 		}
 	}
 
@@ -42,19 +44,19 @@ public abstract class PersistentQueueUnitTest {
 		for (int i = 0; i < numberOfInserts; i++) {
 			queue.add("zzz");
 		}
-		Assert.assertTrue(!queue.isEmpty());
-		Assert.assertEquals(queue.size(), sizeBefore + numberOfInserts);
+		assertTrue(!queue.isEmpty());
+		assertEquals(queue.size(), sizeBefore + numberOfInserts);
 	}
 
 	@Test
 	public void testAddThenPoll()
 			throws NotEnoughMemoryException, LongOverflowException, ClassNotFoundException, IOException {
 		String message = "hello";
-		Assert.assertTrue(queue.add(message));
+		assertTrue(queue.add(message));
 		while (queue.size() > 1) {
-			Assert.assertNotNull(queue.poll());
+			assertNotNull(queue.poll());
 		}
-		Assert.assertEquals(queue.poll(), message);
+		assertEquals(queue.poll(), message);
 	}
 
 	@Test
@@ -63,22 +65,22 @@ public abstract class PersistentQueueUnitTest {
 		String message = "hello";
 		queue.add(message);
 		long size = queue.size();
-		Assert.assertEquals(queue.peek(), message);
-		Assert.assertEquals(queue.size(), size);
+		assertEquals(queue.peek(), message);
+		assertEquals(queue.size(), size);
 	}
 
 	@Test
 	public void testFiftyInThenFiftyOut()
 			throws NotEnoughMemoryException, LongOverflowException, ClassNotFoundException, IOException {
 		while (!queue.isEmpty()) {
-			Assert.assertNotNull(queue.poll());
+			assertNotNull(queue.poll());
 		}
 
 		for (int i = 0; i < 50; i++) {
 			queue.add(i);
 		}
 		for (int i = 0; i < 50; i++) {
-			Assert.assertEquals(queue.poll(), i);
+			assertEquals(queue.poll(), i);
 		}
 	}
 
@@ -92,8 +94,8 @@ public abstract class PersistentQueueUnitTest {
 		for (int i = 0; i < numberOfRemoves; i++) {
 			queue.poll();
 		}
-		Assert.assertTrue(queue.isEmpty());
-		Assert.assertEquals(queue.size(), 0);
+		assertTrue(queue.isEmpty());
+		assertEquals(queue.size(), 0);
 	}
 
 	@Test
@@ -101,8 +103,8 @@ public abstract class PersistentQueueUnitTest {
 		while (!queue.isEmpty()) {
 			queue.poll();
 		}
-		Assert.assertTrue(queue.isEmpty());
-		Assert.assertNull(queue.poll());
+		assertTrue(queue.isEmpty());
+		assertNull(queue.poll());
 	}
 
 	@Test
@@ -110,8 +112,8 @@ public abstract class PersistentQueueUnitTest {
 		while (!queue.isEmpty()) {
 			queue.poll();
 		}
-		Assert.assertTrue(queue.isEmpty());
-		Assert.assertNull(queue.peek());
+		assertTrue(queue.isEmpty());
+		assertNull(queue.peek());
 	}
 
 	@Test
@@ -122,21 +124,21 @@ public abstract class PersistentQueueUnitTest {
 		}
 
 		for (int i = 0; i < 6; i++) {
-			Assert.assertTrue(queue.add(i));
+			assertTrue(queue.add(i));
 		}
-		Assert.assertEquals(queue.poll(), 0);
-		Assert.assertEquals(queue.poll(), 1);
-		Assert.assertTrue(queue.add(10));
-		Assert.assertTrue(queue.add(12));
-		Assert.assertEquals(queue.poll(), 2);
-		Assert.assertEquals(queue.poll(), 3);
-		Assert.assertEquals(queue.poll(), 4);
-		Assert.assertTrue(queue.add(13));
-		Assert.assertEquals(queue.poll(), 5);
-		Assert.assertEquals(queue.poll(), 10);
-		Assert.assertEquals(queue.poll(), 12);
-		Assert.assertEquals(queue.poll(), 13);
-		Assert.assertTrue(queue.isEmpty());
+		assertEquals(queue.poll(), 0);
+		assertEquals(queue.poll(), 1);
+		assertTrue(queue.add(10));
+		assertTrue(queue.add(12));
+		assertEquals(queue.poll(), 2);
+		assertEquals(queue.poll(), 3);
+		assertEquals(queue.poll(), 4);
+		assertTrue(queue.add(13));
+		assertEquals(queue.poll(), 5);
+		assertEquals(queue.poll(), 10);
+		assertEquals(queue.poll(), 12);
+		assertEquals(queue.poll(), 13);
+		assertTrue(queue.isEmpty());
 	}
 
 	private class AddToQueueRunnable implements Runnable {
@@ -171,7 +173,7 @@ public abstract class PersistentQueueUnitTest {
 		@Override
 		public void run() {
 			try {
-				Assert.assertNotNull(queue.poll());
+				assertNotNull(queue.poll());
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -195,7 +197,7 @@ public abstract class PersistentQueueUnitTest {
 			if (futureObj instanceof Exception) {
 				throw (Exception) futureObj;
 			} else {
-				Assert.assertSame(null, future.get());
+				assertSame(null, future.get());
 			}
 		}
 
@@ -208,7 +210,7 @@ public abstract class PersistentQueueUnitTest {
 			if (futureObj instanceof Exception) {
 				throw (Exception) futureObj;
 			} else {
-				Assert.assertSame(null, future.get());
+				assertSame(null, future.get());
 			}
 		}
 

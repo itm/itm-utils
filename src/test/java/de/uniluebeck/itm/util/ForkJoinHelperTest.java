@@ -11,9 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static de.uniluebeck.itm.util.ForkJoinHelper.join;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class ForkJoinHelperTest {
@@ -71,10 +69,10 @@ public class ForkJoinHelperTest {
 		final BiMap<Callable<String>, String> resultMap = ForkJoinHelper
 				.join(ForkJoinHelper.fork(callables, executorService));
 
-		Assert.assertEquals(3, resultMap.size());
-		Assert.assertEquals("hello1", resultMap.get(successful1));
-		Assert.assertEquals("hello2", resultMap.get(successful2));
-		Assert.assertEquals("hello3", resultMap.get(successful3));
+		assertEquals(3, resultMap.size());
+		assertEquals("hello1", resultMap.get(successful1));
+		assertEquals("hello2", resultMap.get(successful2));
+		assertEquals("hello3", resultMap.get(successful3));
 	}
 
 	@Test
@@ -85,7 +83,7 @@ public class ForkJoinHelperTest {
 		try {
 			final BiMap<Callable<String>, String> resultMap = ForkJoinHelper
 					.join(ForkJoinHelper.fork(callables, executorService));
-			Assert.fail("An exception should have been thrown!");
+			fail("An exception should have been thrown!");
 		} catch (Exception expected) {
 		}
 	}
@@ -97,8 +95,8 @@ public class ForkJoinHelperTest {
 
 		final BiMap<Callable<String>, String> resultMap = ForkJoinHelper
 				.join(ForkJoinHelper.fork(callables, executorService), true);
-		Assert.assertEquals(2, resultMap.size());
-		Assert.assertEquals("hello1", resultMap.get(successful1));
-		Assert.assertEquals("hello2", resultMap.get(successful2));
+		assertEquals(2, resultMap.size());
+		assertEquals("hello1", resultMap.get(successful1));
+		assertEquals("hello2", resultMap.get(successful2));
 	}
 }
