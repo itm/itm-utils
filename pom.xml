@@ -26,12 +26,12 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>de.uniluebeck.itm.itmutils</groupId>
-	<artifactId>itmutils</artifactId>
+	<groupId>de.uniluebeck.itm.util</groupId>
+	<artifactId>parent</artifactId>
 	<version>0.5-SNAPSHOT</version>
 
 	<packaging>jar</packaging>
-	<name>ITM Utility Classes</name>
+	<name>ITM Utils :: Parent</name>
 
 	<dependencies>
 		<dependency>
