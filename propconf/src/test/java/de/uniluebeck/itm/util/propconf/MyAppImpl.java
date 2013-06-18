@@ -1,9 +1,9 @@
 package de.uniluebeck.itm.util.propconf;
 
+import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 public class MyAppImpl implements MyApp {
 
