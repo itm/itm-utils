@@ -1,4 +1,4 @@
-package de.uniluebeck.itm.util.futures;
+package de.uniluebeck.itm.util.concurrent;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;

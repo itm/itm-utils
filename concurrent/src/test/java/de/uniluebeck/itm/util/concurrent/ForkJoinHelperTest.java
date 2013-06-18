@@ -1,4 +1,4 @@
-package de.uniluebeck.itm.util.futures;
+package de.uniluebeck.itm.util.concurrent;
 
 import com.google.common.collect.BiMap;
 import org.junit.After;
@@ -11,8 +11,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static de.uniluebeck.itm.util.futures.ForkJoinHelper.fork;
-import static de.uniluebeck.itm.util.futures.ForkJoinHelper.join;
+import static de.uniluebeck.itm.util.concurrent.ForkJoinHelper.fork;
+import static de.uniluebeck.itm.util.concurrent.ForkJoinHelper.join;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

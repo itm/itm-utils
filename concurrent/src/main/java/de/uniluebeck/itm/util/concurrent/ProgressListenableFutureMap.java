@@ -1,4 +1,4 @@
-package de.uniluebeck.itm.util.futures;
+package de.uniluebeck.itm.util.concurrent;
 
 import java.util.Map;
 
