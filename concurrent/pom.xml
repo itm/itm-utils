@@ -11,8 +11,8 @@
 		<relativePath>../</relativePath>
 	</parent>
 
-	<artifactId>futures</artifactId>
-	<name>ITM Utils :: Futures</name>
+	<artifactId>concurrent</artifactId>
+	<name>ITM Utils :: Concurrent</name>
 
 	<dependencies>
 		<dependency>

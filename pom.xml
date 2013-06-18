@@ -34,9 +34,9 @@
 	<name>ITM Utils :: Parent</name>
 
 	<modules>
+		<module>concurrent</module>
 		<module>domobserver</module>
 		<module>files</module>
-		<module>futures</module>
 		<module>logging</module>
 		<module>propconf</module>
 		<module>util</module>
@@ -47,17 +47,17 @@
 
 			<dependency>
 				<groupId>de.uniluebeck.itm.util</groupId>
+				<artifactId>concurrent</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.uniluebeck.itm.util</groupId>
 				<artifactId>domobserver</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>de.uniluebeck.itm.util</groupId>
 				<artifactId>files</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>de.uniluebeck.itm.util</groupId>
-				<artifactId>futures</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

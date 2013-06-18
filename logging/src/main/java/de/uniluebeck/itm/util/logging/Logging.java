@@ -29,6 +29,9 @@ import org.apache.log4j.*;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Handler;
 
@@ -41,8 +44,20 @@ public class Logging {
 	/**
 	 * All available log levels as an array.
 	 */
-	@SuppressWarnings("MismatchedReadAndWriteOfArray")
-	private final static Level[] LOG_LEVELS = {Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR};
+	public final static LogLevel[] LOG_LEVELS =
+			{LogLevel.TRACE, LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR};
+
+	private static final Map<LogLevel, Level> LOG_LEVEL_MAP;
+
+	static {
+		Map<LogLevel, Level> map = new HashMap<LogLevel, Level>();
+		map.put(LogLevel.TRACE, Level.TRACE);
+		map.put(LogLevel.DEBUG, Level.DEBUG);
+		map.put(LogLevel.INFO, Level.INFO);
+		map.put(LogLevel.WARN, Level.WARN);
+		map.put(LogLevel.ERROR, Level.ERROR);
+		LOG_LEVEL_MAP = Collections.unmodifiableMap(map);
+	}
 
 	/**
 	 * The default {@link PatternLayout}
@@ -51,40 +66,30 @@ public class Logging {
 			"%-23d{yyyy-MM-dd HH:mm:ss,SSS} | %-30.30t | %-30.30c{1} | %-5p | %m%n";
 
 	/**
-	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@link Level#INFO} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
+	 * Same as calling {@link Logging#setLoggingDefaults(LogLevel, String)} with level {@link Level#INFO} and layout
+	 * {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 */
 	public static void setLoggingDefaults() {
-		setLoggingDefaults(Level.INFO, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
+		setLoggingDefaults(LogLevel.INFO, DEFAULT_PATTERN_LAYOUT);
 	}
 
 	/**
-	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@link Level#DEBUG} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
+	 * Same as calling {@link Logging#setLoggingDefaults(LogLevel, String)} with level {@link Level#DEBUG} and layout
+	 * {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 */
 	public static void setDebugLoggingDefaults() {
-		setLoggingDefaults(Level.DEBUG, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
+		setLoggingDefaults(LogLevel.DEBUG, DEFAULT_PATTERN_LAYOUT);
 	}
 
 	/**
-	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Layout)} with level
-	 * {@code level} and layout {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
+	 * Same as calling {@link Logging#setLoggingDefaults(LogLevel, String)} with level {@code level} and layout
+	 * {@link Logging#DEFAULT_PATTERN_LAYOUT} set on a {@link ConsoleAppender}.
 	 *
-	 * @param level the log level to set on the root logger
+	 * @param logLevel
+	 * 		the log level to set on the root logger
 	 */
-	public static void setLoggingDefaults(final Level level) {
-		setLoggingDefaults(level, new ConsoleAppender(new PatternLayout(DEFAULT_PATTERN_LAYOUT)));
-	}
-
-	/**
-	 * Same as calling {@link Logging#setLoggingDefaults(org.apache.log4j.Level, org.apache.log4j.Appender...)} with level
-	 * {@code level} and layout {@code layout} set on a {@link ConsoleAppender}.
-	 *
-	 * @param level  the log level to set on the root logger
-	 * @param layout the layout to set on the appender
-	 */
-	public static void setLoggingDefaults(final Level level, final Layout layout) {
-		setLoggingDefaults(level, new ConsoleAppender(layout));
+	public static void setLoggingDefaults(final LogLevel logLevel) {
+		setLoggingDefaults(logLevel, DEFAULT_PATTERN_LAYOUT);
 	}
 
 	/**
@@ -93,13 +98,18 @@ public class Logging {
 	 * <ol> <li>If the system property "log4j.configuration" is found and it points to a valid readable file the file is
 	 * passed to log4j as a configuration file.</li> <li>If the first does not apply and a file with the name
 	 * "log4j.properties" is found in the JVMs classpath this file is passed to log4j as a configuration file.</li> <li>If
-	 * neither the first or the second apply log4j is configured to log level {@code level} and layout {@code layout}.</li>
+	 * neither the first or the second apply log4j is configured to log logLevel {@code logLevel} and layout {@code
+	 * layout}.</li>
 	 * </ol>
 	 *
-	 * @param level	the log level to set on the root logger
-	 * @param appenders {@link Appender} instances to add to the root logger
+	 * @param logLevel
+	 * 		the log logLevel to set on the root logger
+	 * @param patternLayout
+	 * 		{@link Appender} instances to add to the root logger
 	 */
-	public static void setLoggingDefaults(final Level level, final Appender... appenders) {
+	public static void setLoggingDefaults(final LogLevel logLevel, final String patternLayout) {
+
+		final Appender appender = new ConsoleAppender(new PatternLayout(patternLayout));
 
 		Logger.getRootLogger().removeAllAppenders();
 
@@ -111,10 +121,8 @@ public class Logging {
 			return;
 		}
 
-		for (Appender appender : appenders) {
-			Logger.getRootLogger().addAppender(appender);
-		}
-		Logger.getRootLogger().setLevel(level);
+		Logger.getRootLogger().addAppender(appender);
+		Logger.getRootLogger().setLevel(LOG_LEVEL_MAP.get(logLevel));
 
 		java.util.logging.Logger rootLogger = java.util.logging.LogManager.getLogManager().getLogger("");
 		Handler[] handlers = rootLogger.getHandlers();
@@ -122,6 +130,16 @@ public class Logging {
 			rootLogger.removeHandler(handler);
 		}
 		SLF4JBridgeHandler.install();
+	}
+
+	public static void setRootLogLevel(final LogLevel logLevel) {
+		Logger.getRootLogger().setLevel(LOG_LEVEL_MAP.get(logLevel));
+	}
+
+	public static void setLogLevel(final LogLevel logLevel, final String... packages) {
+		for (String aPackage : packages) {
+			org.apache.log4j.Logger.getLogger(aPackage).setLevel(LOG_LEVEL_MAP.get(logLevel));
+		}
 	}
 
 	/**
