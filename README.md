@@ -1,4 +1,4 @@
-ITM Utiltity Classes
+ITM Utility Classes
 ====================
 
 Installation / Building
