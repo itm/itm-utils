@@ -2,7 +2,6 @@ package de.uniluebeck.itm.util.domobserver;
 
 import com.google.inject.Guice;
 import com.google.inject.Provider;
-import de.uniluebeck.itm.util.logging.Logging;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,10 +24,6 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DOMObserverImplTest {
-
-	static {
-		Logging.setLoggingDefaults();
-	}
 
 	private static final String CONFIG_1 = "de/uniluebeck/itm/util/domobserver/tr.iwsn-testbed.xml";
 
