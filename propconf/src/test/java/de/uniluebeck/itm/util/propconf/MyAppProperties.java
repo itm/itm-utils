@@ -1,6 +1,6 @@
 package de.uniluebeck.itm.util.propconf;
 
-public interface MyAppProperties extends PropConfProperties {
+public interface MyAppProperties {
 
 	@PropConf(
 			usage = "myUsage",

@@ -18,5 +18,7 @@ public @interface PropConf {
 
 	boolean required() default false;
 
+	String defaultValue() default "";
+
 	Class<? extends AbstractConverter> typeConverter() default AbstractConverter.class;
 }
