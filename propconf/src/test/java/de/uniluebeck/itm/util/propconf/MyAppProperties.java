@@ -5,7 +5,6 @@ public interface MyAppProperties {
 	@PropConf(
 			usage = "myUsage",
 			example = "myExample",
-			required = true,
 			typeConverter = MyCustomTypeConverter.class
 	)
 	String MYAPP_MYCUSTOMTYPE = "myapp.mycustomtype";
@@ -13,7 +12,6 @@ public interface MyAppProperties {
 	@PropConf(
 			usage = "myUsage2",
 			example = "myExample2",
-			required = false,
 			typeConverter = MyCustomTypeConverter.class
 	)
 	String MYAPP_MYCUSTOMTYPE2 = "myapp.mycustomtype2";

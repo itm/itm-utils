@@ -16,8 +16,6 @@ public @interface PropConf {
 
 	String example() default "";
 
-	boolean required() default false;
-
 	String defaultValue() default "";
 
 	Class<? extends AbstractConverter> typeConverter() default AbstractConverter.class;

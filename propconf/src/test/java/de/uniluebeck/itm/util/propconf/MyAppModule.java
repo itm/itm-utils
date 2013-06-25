@@ -14,7 +14,7 @@ public class MyAppModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
-		install(new PropConfModule(MyAppProperties.class, properties));
+		install(new PropConfModule(properties, MyAppProperties.class));
 		bind(MyApp.class).to(MyAppImpl.class);
 	}
 }

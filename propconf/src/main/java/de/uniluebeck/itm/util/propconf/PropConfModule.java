@@ -1,5 +1,7 @@
 package de.uniluebeck.itm.util.propconf;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import org.nnsoft.guice.rocoto.configuration.ConfigurationModule;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -20,35 +23,23 @@ import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.newHashSet;
 
-public class PropConfModule<T> extends AbstractModule {
+public class PropConfModule extends AbstractModule {
 
 	private static final Logger log = LoggerFactory.getLogger(PropConfModule.class);
 
-	private final Class<? extends T> configClass;
+	private final Class<?>[] configClasses;
 
 	private final Properties properties;
 
-	public PropConfModule(final Class<? extends T> configClass, final Properties properties) {
-		this.configClass = configClass;
+	public PropConfModule(final Properties properties, final Class<?>... configClasses) {
+		this.configClasses = configClasses;
 		this.properties = properties;
-		assertRequiredPropertiesPresent();
 	}
 
 	@Override
 	protected void configure() {
 		bindDeclaredProperties();
 		installDeclaredConverters();
-	}
-
-	private void assertRequiredPropertiesPresent() {
-		for (Map.Entry<String, PropConf> entry : getDeclaredAnnotations().entrySet()) {
-			if (entry.getValue().required() && !properties.containsKey(entry.getKey())) {
-				String msg = "Configuration property \"" + entry.getKey() + "\""
-						+ " (Usage: " + entry.getValue().usage() + ","
-						+ " Example: " + entry.getKey() + "=" + entry.getValue().example() + ") is missing!";
-				throw new IllegalArgumentException(msg);
-			}
-		}
 	}
 
 	private void installDeclaredConverters() {
@@ -66,20 +57,20 @@ public class PropConfModule<T> extends AbstractModule {
 		}
 	}
 
-	private Map<String, PropConf> getDeclaredAnnotations() {
-		final Map<String, PropConf> map = newHashMap();
-		for (Field field : configClass.getDeclaredFields()) {
-			for (Annotation annotation : field.getDeclaredAnnotations()) {
-				if (PropConf.class.isInstance(annotation)) {
-					try {
-						map.put((String) field.get(null), (PropConf) annotation);
-					} catch (ClassCastException e) {
-						throw new RuntimeException(
-								PropConf.class.getSimpleName() +
-										" annotations are only allowed on constant String fields!"
-						);
-					} catch (IllegalAccessException e) {
-						throw propagate(e);
+	private Map<Field, PropConf> getDeclaredAnnotations() {
+		final Map<Field, PropConf> map = newHashMap();
+		for (Class<?> configClass : configClasses) {
+			for (Field field : configClass.getDeclaredFields()) {
+				for (Annotation annotation : field.getDeclaredAnnotations()) {
+					if (PropConf.class.isInstance(annotation)) {
+						try {
+							map.put(field, (PropConf) annotation);
+						} catch (ClassCastException e) {
+							throw new RuntimeException(
+									PropConf.class.getSimpleName() +
+											" annotations are only allowed on constant String fields!"
+							);
+						}
 					}
 				}
 			}
@@ -89,8 +80,24 @@ public class PropConfModule<T> extends AbstractModule {
 
 	private void bindDeclaredProperties() {
 
-		final Map<String, PropConf> declaredAnnotations = getDeclaredAnnotations();
-		final Set<String> declaredKeys = declaredAnnotations.keySet();
+		if (log.isInfoEnabled()) {
+			log.info("Binding properties for {}", Arrays.toString(configClasses));
+		}
+
+		final Map<Field, PropConf> declaredAnnotations = getDeclaredAnnotations();
+		final Set<String> declaredKeys =
+				newHashSet(Iterables.transform(declaredAnnotations.keySet(), new Function<Field, String>() {
+					@Override
+					public String apply(final Field input) {
+						try {
+							return (String) input.get(null);
+						} catch (IllegalAccessException e) {
+							throw propagate(e);
+						}
+					}
+				}
+				)
+				);
 		final Set<String> boundKeys = newHashSet(transform(properties.keySet(), toStringFunction()));
 		final Set<String> unboundKeys = difference(declaredKeys, boundKeys);
 
@@ -100,13 +107,25 @@ public class PropConfModule<T> extends AbstractModule {
 			protected void bindConfigurations() {
 				bindProperties(properties);
 			}
-		});
+		}
+		);
 
 		// bind any non-specified properties to their default values
-		for (String unboundKey : unboundKeys) {
-			final String defaultValue = declaredAnnotations.get(unboundKey).defaultValue();
-			log.trace("Binding default value ({}) for unspecified property \"{}\"", defaultValue, unboundKey);
-			bindConstant().annotatedWith(Names.named(unboundKey)).to(defaultValue);
+		try {
+			for (Field field : declaredAnnotations.keySet()) {
+				final String key = (String) field.get(null);
+				if (unboundKeys.contains(key)) {
+					final String defaultValue = declaredAnnotations.get(field).defaultValue();
+					log.info("Binding \"{}\" = \"{}\" (default value)", key, defaultValue);
+					bindConstant().annotatedWith(Names.named(key)).to(defaultValue);
+				} else if (boundKeys.contains(key)) {
+					final String value = (String) properties.get(key);
+					log.info("Binding \"{}\" = \"{}\"", key, value);
+					bindConstant().annotatedWith(Names.named(key)).to(value);
+				}
+			}
+		} catch (IllegalAccessException e) {
+			throw propagate(e);
 		}
 	}
 }
