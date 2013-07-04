@@ -1,18 +1,19 @@
 package de.uniluebeck.itm.util.propconf;
 
-public interface MyAppProperties {
+public class MyAppProperties {
 
 	@PropConf(
 			usage = "myUsage",
 			example = "myExample",
 			typeConverter = MyCustomTypeConverter.class
 	)
-	String MYAPP_MYCUSTOMTYPE = "myapp.mycustomtype";
+	public static final String MYAPP_MYCUSTOMTYPE = "myapp.mycustomtype";
 
 	@PropConf(
 			usage = "myUsage2",
 			example = "myExample2",
+			defaultValue = "myDefaultValue2",
 			typeConverter = MyCustomTypeConverter.class
 	)
-	String MYAPP_MYCUSTOMTYPE2 = "myapp.mycustomtype2";
+	public static final String MYAPP_MYCUSTOMTYPE2 = "myapp.mycustomtype2";
 }

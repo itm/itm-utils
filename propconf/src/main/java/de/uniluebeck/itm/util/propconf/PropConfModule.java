@@ -9,7 +9,6 @@ import org.nnsoft.guice.rocoto.converters.AbstractConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
@@ -19,9 +18,9 @@ import java.util.Set;
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.newHashSet;
+import static de.uniluebeck.itm.util.propconf.PropConfHelper.getDeclaredAnnotations;
 
 public class PropConfModule extends AbstractModule {
 
@@ -43,7 +42,7 @@ public class PropConfModule extends AbstractModule {
 	}
 
 	private void installDeclaredConverters() {
-		for (PropConf propConf : getDeclaredAnnotations().values()) {
+		for (PropConf propConf : getDeclaredAnnotations(configClasses).values()) {
 			if (AbstractConverter.class != propConf.typeConverter()) {
 				final AbstractConverter converter;
 				try {
@@ -57,34 +56,13 @@ public class PropConfModule extends AbstractModule {
 		}
 	}
 
-	private Map<Field, PropConf> getDeclaredAnnotations() {
-		final Map<Field, PropConf> map = newHashMap();
-		for (Class<?> configClass : configClasses) {
-			for (Field field : configClass.getDeclaredFields()) {
-				for (Annotation annotation : field.getDeclaredAnnotations()) {
-					if (PropConf.class.isInstance(annotation)) {
-						try {
-							map.put(field, (PropConf) annotation);
-						} catch (ClassCastException e) {
-							throw new RuntimeException(
-									PropConf.class.getSimpleName() +
-											" annotations are only allowed on constant String fields!"
-							);
-						}
-					}
-				}
-			}
-		}
-		return map;
-	}
-
 	private void bindDeclaredProperties() {
 
 		if (log.isInfoEnabled()) {
 			log.info("Binding properties for {}", Arrays.toString(configClasses));
 		}
 
-		final Map<Field, PropConf> declaredAnnotations = getDeclaredAnnotations();
+		final Map<Field, PropConf> declaredAnnotations = getDeclaredAnnotations(configClasses);
 		final Set<String> declaredKeys =
 				newHashSet(Iterables.transform(declaredAnnotations.keySet(), new Function<Field, String>() {
 					@Override
