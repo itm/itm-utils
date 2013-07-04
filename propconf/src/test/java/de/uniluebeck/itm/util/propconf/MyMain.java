@@ -5,6 +5,8 @@ import de.uniluebeck.itm.util.logging.Logging;
 
 import java.util.Properties;
 
+import static de.uniluebeck.itm.util.propconf.PropConfBuilder.printDocumentationAndExit;
+
 public class MyMain {
 
 	static {
@@ -19,7 +21,7 @@ public class MyMain {
 		properties.put(MyAppProperties.MYAPP_MYCUSTOMTYPE2, "mycustomvalue2");
 
 		if (args.length > 0 && "help".equals(args[0])) {
-			PropConfBuilder.printDocumentation(System.out, MyAppProperties.class);
+			printDocumentationAndExit(System.out, MyAppProperties.class);
 		} else {
 
 			final MyAppModule myAppModule = new MyAppModule(properties);

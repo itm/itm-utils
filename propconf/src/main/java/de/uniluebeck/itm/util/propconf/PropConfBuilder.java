@@ -32,6 +32,16 @@ public abstract class PropConfBuilder {
 		return outputStream;
 	}
 
+	public static void printDocumentationAndExit(final OutputStream outputStream, final Class<?>... configClasses) {
+		printDocumentation(outputStream, configClasses);
+		System.exit(1);
+	}
+
+	public static void printDocumentationAndExit(final Writer writer, final Class<?>... configClasses) {
+		printDocumentation(writer, configClasses);
+		System.exit(1);
+	}
+
 	@SuppressWarnings("unused")
 	public static Writer printDocumentation(final Writer writer, final Class<?>... configClasses) {
 		try {
