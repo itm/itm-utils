@@ -37,6 +37,7 @@
 		<module>concurrent</module>
 		<module>domobserver</module>
 		<module>files</module>
+		<module>jpa</module>
 		<module>logging</module>
 		<module>propconf</module>
 		<module>util</module>
@@ -58,6 +59,11 @@
 			<dependency>
 				<groupId>de.uniluebeck.itm.util</groupId>
 				<artifactId>files</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.uniluebeck.itm.util</groupId>
+				<artifactId>jpa</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
@@ -89,6 +95,11 @@
 			<dependency>
 				<groupId>com.google.inject.extensions</groupId>
 				<artifactId>guice-assistedinject</artifactId>
+				<version>3.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.inject.extensions</groupId>
+				<artifactId>guice-persist</artifactId>
 				<version>3.0</version>
 			</dependency>
 			<dependency>
@@ -125,6 +136,26 @@
 				<groupId>org.99soft.guice</groupId>
 				<artifactId>rocoto</artifactId>
 				<version>6.2</version>
+			</dependency>
+			<dependency>
+				<groupId>org.hibernate.javax.persistence</groupId>
+				<artifactId>hibernate-jpa-2.0-api</artifactId>
+				<version>1.0.0.Final</version>
+			</dependency>
+			<dependency>
+				<groupId>org.hibernate</groupId>
+				<artifactId>hibernate-entitymanager</artifactId>
+				<version>4.1.9.Final</version>
+			</dependency>
+			<dependency>
+				<groupId>org.hibernate</groupId>
+				<artifactId>hibernate-core</artifactId>
+				<version>4.1.9.Final</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.transaction</groupId>
+				<artifactId>jta</artifactId>
+				<version>1.1</version>
 			</dependency>
 
 			<dependency>
