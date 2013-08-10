@@ -16,6 +16,10 @@ import static com.google.common.collect.Maps.newHashMap;
 
 public class ProgressSettableFutureMap<K, V> implements ProgressListenableFutureMap<K, V> {
 
+	public static <K, V> ProgressSettableFutureMap<K, V> of(final K key, final ProgressSettableFuture<V> value) {
+		return new ProgressSettableFutureMap<K, V>(ImmutableMap.<K, ProgressListenableFuture<V>>of(key, value));
+	}
+
 	protected final ImmutableMap<K, ProgressListenableFuture<V>> map;
 
 	public ProgressSettableFutureMap(final Map<K, ProgressListenableFuture<V>> map) {

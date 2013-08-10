@@ -17,6 +17,10 @@ public class SettableFutureMap<K, V> implements ListenableFutureMap<K, V> {
 
 	protected final ImmutableMap<K, ListenableFuture<V>> map;
 
+	public static <K, V> SettableFutureMap<K, V> of(K key, ListenableFuture<V> valueFuture) {
+		return new SettableFutureMap<K, V>(ImmutableMap.of(key, valueFuture));
+	}
+
 	public SettableFutureMap(final Map<K, ? extends ListenableFuture<V>> map) {
 		this.map = ImmutableMap.copyOf(map);
 	}

@@ -16,7 +16,7 @@ public class ProgressSettableFuture<V> extends AbstractFuture<V> implements Prog
 
 	private float progress = 0;
 
-	private ProgressSettableFuture() {
+	protected ProgressSettableFuture() {
 	}
 
 	@Override
