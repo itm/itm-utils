@@ -41,6 +41,7 @@
 		<module>jpa</module>
 		<module>logging</module>
 		<module>propconf</module>
+		<module>scheduler</module>
 		<module>util</module>
 	</modules>
 
