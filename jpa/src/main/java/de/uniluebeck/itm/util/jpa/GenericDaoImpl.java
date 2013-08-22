@@ -1,6 +1,7 @@
 package de.uniluebeck.itm.util.jpa;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -29,7 +30,7 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 
 	/** The interface used to interact with the persistence context. */
 	@Inject
-	private EntityManager entityManager;
+	private Provider<EntityManager> entityManager;
 
 	/** The class of the managed and persistent entities. */
 	private Class<T> entityClass;
@@ -54,7 +55,7 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	 */
 	@Inject
 	@SuppressWarnings("UnusedDeclaration")
-	public GenericDaoImpl(final EntityManager entityManager) {
+	public GenericDaoImpl(final Provider<EntityManager> entityManager) {
 		this.entityManager = entityManager;
 	}
 	
@@ -67,7 +68,7 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	 *            The class of the managed and persistent entities.
 	 */
 	@SuppressWarnings("UnusedDeclaration")
-	public GenericDaoImpl(final EntityManager entityManager, final Class<T> typeClass) {
+	public GenericDaoImpl(final Provider<EntityManager> entityManager, final Class<T> typeClass) {
 		this.entityManager = entityManager;
 		this.entityClass = typeClass;
 	}
@@ -93,7 +94,7 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	 */
 	@SuppressWarnings("UnusedDeclaration")
 	protected final EntityManager getEntityManager() {
-		return entityManager;
+		return entityManager.get();
 	}
 
 	/**
@@ -109,15 +110,16 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	@Override
 	public T find(K id) {
 		log.debug("Trying to fetch " + entityClass + " instance with id: " + id);
-		return entityManager.find(entityClass, id);
+		return entityManager.get().find(entityClass, id);
 	}
 
 	@Override
 	public List<T> find() {
 		log.debug("Trying to fetch all " + entityClass + " instances from persistence context...");
-		CriteriaQuery<T> createQuery = entityManager.getEntityManagerFactory().getCriteriaBuilder().createQuery(entityClass);
+		final EntityManager em = entityManager.get();
+		CriteriaQuery<T> createQuery = em.getEntityManagerFactory().getCriteriaBuilder().createQuery(entityClass);
 		createQuery.from(entityClass);
-		List<T> resultList = entityManager.createQuery(createQuery).getResultList();
+		List<T> resultList = em.createQuery(createQuery).getResultList();
 		log.debug(resultList.size()+" entities of class " + entityClass + " fetched from persistence context");
 		return resultList;
 	}
@@ -126,40 +128,40 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	@Transactional
 	public void save(T entity) {
 		log.debug("Persisting " + entity);
-		entityManager.persist(entity);
+		entityManager.get().persist(entity);
 	}
 
 	@Override
 	@Transactional
 	public void update(T entity) {
 		log.debug("Persisting all local changes of " + entity);
-		entityManager.merge(entity);
+		entityManager.get().merge(entity);
 	}
 
 	@Override
 	@Transactional
 	public void delete(T entity) {
 		log.debug("Removing " + entity+" from persistence context");
-		entityManager.remove(entity);
+		entityManager.get().remove(entity);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public K getKey(T entity) {
-		Session session = entityManager.unwrap(Session.class);
+		Session session = entityManager.get().unwrap(Session.class);
 		return (K) session.getSessionFactory().getClassMetadata(entityClass).getIdentifier(entity, (SessionImplementor) session);
 	}
 
 	@Override
 	public void refresh(T entity) {
 		log.debug("Resetting all properties of " + entity+" from persistence context");
-		entityManager.refresh(entity);
+		entityManager.get().refresh(entity);
 	}
 
 	@Override
 	public boolean contains(T entity) {
 		log.debug("Checking whether " + entity+" consists in persistence context");
-		return entityManager.contains(entity);
+		return entityManager.get().contains(entity);
 	}
 
 }
