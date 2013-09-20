@@ -68,11 +68,49 @@ public class FileUtils {
 		}
 	}
 
-    public static void deleteDirectory(File dir) throws SecurityException {
-        if (!dir.exists()) return;
-        for (String filename : dir.getAbsoluteFile().list()){
-            new File(dir.getAbsolutePath(), filename).delete();
-        }
-        dir.delete();
-    }
+	public static void deleteDirectory(File dir) throws SecurityException {
+		if (!dir.exists()) {
+			return;
+		}
+		for (String filename : dir.getAbsoluteFile().list()) {
+			new File(dir.getAbsolutePath(), filename).delete();
+		}
+		dir.delete();
+	}
+
+	/**
+	 * Assures that a file exists, is not a directory and is readable.
+	 *
+	 * @param filename
+	 * 		path to the file
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if file does not exist, is a directory or is not readable
+	 */
+	public static void assertFileExistsAndIsReadable(final String filename) throws IllegalArgumentException {
+		assertFileExistsAndIsReadable(new File(filename));
+	}
+
+	/**
+	 * Assures that a file exists, is not a directory and is readable.
+	 *
+	 * @param file the file
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if file does not exist, is a directory or is not readable
+	 */
+	public static void assertFileExistsAndIsReadable(final File file) throws IllegalArgumentException {
+
+		if (!file.exists()) {
+			throw new IllegalArgumentException("File \"" + file.getAbsolutePath() + "\" does not exist!");
+		}
+
+		if (!file.isFile()) {
+			throw new IllegalArgumentException("\"" + file.getAbsolutePath() + " is not a file!");
+		}
+
+		if (!file.canRead()) {
+			throw new IllegalArgumentException("File \"" + file.getAbsolutePath() + "\" can't be read!");
+		}
+	}
 }
