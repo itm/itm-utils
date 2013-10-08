@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 @SuppressWarnings("NullableProblems")
-class SchedulerServiceImpl extends AbstractService implements SchedulerService {
+public class SchedulerServiceImpl extends AbstractService implements SchedulerService {
 
 	private ScheduledExecutorService scheduler;
 
@@ -23,7 +23,7 @@ class SchedulerServiceImpl extends AbstractService implements SchedulerService {
 	private final String workerThreadNameFormat;
 
 	@Inject
-	SchedulerServiceImpl(@Assisted final int workerThreads,
+	public SchedulerServiceImpl(@Assisted final int workerThreads,
 						 @Assisted final String threadNamePrefix) {
 		this.workerThreads = workerThreads;
 		this.schedulerThreadNameFormat = threadNamePrefix + "-Scheduler";
