@@ -35,7 +35,7 @@ public abstract class NetworkUtils {
 
 		try {
 
-			Socket socket = new Socket(uri.getHost(), uri.getPort());
+			Socket socket = new Socket(uri.getHost(), uri.getPort() == -1 ? 80 : uri.getPort());
 			boolean connected = socket.isConnected();
 			socket.close();
 			return connected;
