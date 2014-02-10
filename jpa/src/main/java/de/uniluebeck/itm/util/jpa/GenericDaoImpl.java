@@ -108,12 +108,14 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 	}
 
 	@Override
+	@Transactional
 	public T find(K id) {
 		log.debug("Trying to fetch " + entityClass + " instance with id: " + id);
 		return entityManager.get().find(entityClass, id);
 	}
 
 	@Override
+	@Transactional
 	public List<T> find() {
 		log.debug("Trying to fetch all " + entityClass + " instances from persistence context...");
 		final EntityManager em = entityManager.get();
@@ -147,18 +149,21 @@ public abstract class GenericDaoImpl<T, K extends Serializable> implements Gener
 
 	@SuppressWarnings("unchecked")
 	@Override
+	@Transactional
 	public K getKey(T entity) {
 		Session session = entityManager.get().unwrap(Session.class);
 		return (K) session.getSessionFactory().getClassMetadata(entityClass).getIdentifier(entity, (SessionImplementor) session);
 	}
 
 	@Override
+	@Transactional
 	public void refresh(T entity) {
 		log.debug("Resetting all properties of " + entity+" from persistence context");
 		entityManager.get().refresh(entity);
 	}
 
 	@Override
+	@Transactional
 	public boolean contains(T entity) {
 		log.debug("Checking whether " + entity+" consists in persistence context");
 		return entityManager.get().contains(entity);
