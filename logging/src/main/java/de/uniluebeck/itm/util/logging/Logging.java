@@ -29,6 +29,7 @@ import org.apache.log4j.*;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -140,6 +141,22 @@ public class Logging {
 		for (String aPackage : packages) {
 			org.apache.log4j.Logger.getLogger(aPackage).setLevel(LOG_LEVEL_MAP.get(logLevel));
 		}
+	}
+
+	/**
+	 * Adds a {@link FileAppender} to the logging configuration which appends all logged messages to a file using the
+	 * specified {@link Logging#DEFAULT_PATTERN_LAYOUT}.<br/>
+	 * Note that the the {@link FileAppender} will be removed if {@link Logging#setDebugLoggingDefaults} or
+	 * {@link Logging#setLoggingDefaults} is called.
+	 *
+	 * @param pathToFile
+	 * 		Path to the file used to store the logged messages
+	 * @throws IOException
+	 * 		Thrown if the file cannot be accessed properly
+	 */
+	public static void addFileAppender(String pathToFile) throws IOException {
+		final Appender appender = new FileAppender(new PatternLayout(Logging.DEFAULT_PATTERN_LAYOUT), pathToFile, true);
+		org.apache.log4j.Logger.getRootLogger().addAppender(appender);
 	}
 
 	/**
