@@ -26,10 +26,14 @@ package de.uniluebeck.itm.util.logging;
 import com.google.classpath.ClassPath;
 import com.google.classpath.ClassPathFactory;
 import org.apache.log4j.*;
+import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -168,18 +172,31 @@ public class Logging {
 	private static boolean tryToLoadFromClassPath() {
 		ClassPathFactory factory = new ClassPathFactory();
 		ClassPath classPath = factory.createFromJVM();
-		if (classPath.isResource("log4j.properties")) {
-			try {
+		try {
+			if (classPath.isResource("log4j.xml")){
+
+				final InputStream resourceAsStream = classPath.getResourceAsStream("log4j.xml");
+				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+				documentBuilderFactory.setNamespaceAware(true);
+				DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
+				DOMConfigurator.configure(builder.parse(resourceAsStream).getDocumentElement());
+
+				System.out.println("Using log4j.xml file for log4j configuration");
+				return true;
+
+			} else if (classPath.isResource("log4j.properties")) {
+
 				Properties properties = new Properties();
 				properties.load(classPath.getResourceAsStream("log4j.properties"));
 				PropertyConfigurator.configure(properties);
+				System.out.println("Using log4j.properties file for log4j configuration");
 				return true;
-			} catch (Exception e) {
-				System.err.println(
-						"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
-				);
-				System.err.println("Using default logging configuration.");
 			}
+		} catch (Exception e) {
+			System.err.println(
+					"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
+			);
+			System.err.println("Using default logging configuration.");
 		}
 		return false;
 	}
@@ -196,8 +213,16 @@ public class Logging {
 			File configurationFile = new File(System.getProperty("log4j.configuration"));
 			if (configurationFile.exists() && !configurationFile.isDirectory() && configurationFile.canRead()) {
 				try {
-					PropertyConfigurator.configure(configurationFile.getAbsolutePath());
-					return true;
+					if (configurationFile.getName().endsWith("xml")){
+						DOMConfigurator.configure(configurationFile.getAbsolutePath());
+						System.out.println("Using "+configurationFile.getName()+" file for log4j configuration");
+						return true;
+					} else if (configurationFile.getName().endsWith("properties")){
+						PropertyConfigurator.configure(configurationFile.getAbsolutePath());
+						System.out.println("Using "+configurationFile.getName()+" file for log4j configuration");
+						return true;
+					}
+					throw new Exception("No configuration files with suffix xml or properties found in classpath.");
 				} catch (Exception e) {
 					System.err.println(
 							"Tried to load log4j configuration from classpath, resulting in the following exception: {}" + e
