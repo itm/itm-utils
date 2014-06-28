@@ -3,6 +3,7 @@ package de.uniluebeck.itm.util.serialization;
 
 import com.google.common.base.Function;
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,13 +24,15 @@ public class MultiClassSerializationHelperTest extends TestCase {
 
     private MultiClassSerializationHelper serializationHelper;
 
+
+
     @Before
     public void setUp() throws Exception {
         serializationHelper = buildSerializationHelper();
 
     }
 
-    private MultiClassSerializationHelper buildSerializationHelper() throws Exception {
+    private Map<Class<?>, Function<?, byte[]>> buildDefaultSerializers() {
         Map<Class<?>, Function<?, byte[]>> serializers = new HashMap<Class<?>, Function<?, byte[]>>();
         serializers.put(String.class, new Function<String, byte[]>() {
                     @Override
@@ -43,6 +46,34 @@ public class MultiClassSerializationHelperTest extends TestCase {
                     }
                 }
         );
+
+        serializers.put(BigInteger.class, new Function<BigInteger, byte[]>() {
+                    @Override
+                    public byte[] apply(BigInteger o) {
+                        return o.toByteArray();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "BigInteger -> byte[]";
+                    }
+                }
+        );
+
+        serializers.put(java.lang.Byte.class, new Function<Byte, byte[]>() {
+            @Nullable
+            @Override
+            public byte[] apply(@Nullable Byte o) {
+                byte[] array = new byte[1];
+                array[0] = o;
+                return array;
+            }
+        });
+
+        return serializers;
+    }
+
+    private Map<Class<?>, Function<byte[], ?>> buildDefaultDeserializers() {
         Map<Class<?>, Function<byte[], ?>> deserializers = new HashMap<Class<?>, Function<byte[], ?>>();
         deserializers.put(String.class, new Function<byte[], String>() {
                     @Override
@@ -61,18 +92,7 @@ public class MultiClassSerializationHelperTest extends TestCase {
                 }
         );
 
-        serializers.put(BigInteger.class, new Function<BigInteger, byte[]>() {
-                    @Override
-                    public byte[] apply(BigInteger o) {
-                        return o.toByteArray();
-                    }
 
-                    @Override
-                    public String toString() {
-                        return "BigInteger -> byte[]";
-                    }
-                }
-        );
 
         deserializers.put(BigInteger.class, new Function<byte[], BigInteger>() {
                     @Override
@@ -87,15 +107,7 @@ public class MultiClassSerializationHelperTest extends TestCase {
                 }
         );
 
-        serializers.put(java.lang.Byte.class, new Function<Byte, byte[]>() {
-            @Nullable
-            @Override
-            public byte[] apply(@Nullable Byte o) {
-                byte[] array = new byte[1];
-                array[0] = o;
-                return array;
-            }
-        });
+
 
         deserializers.put(Byte.class, new Function<byte[], Byte>() {
             @Nullable
@@ -105,11 +117,18 @@ public class MultiClassSerializationHelperTest extends TestCase {
             }
         });
 
+        return deserializers;
+    }
+
+    private MultiClassSerializationHelper buildSerializationHelper() throws Exception {
+
+
+
         String path = System.getProperty("java.io.tmpdir") + "/MultiClassSerializationHelper.mapping";
 
-        BiMap<Class<?>, Byte> mapping = MultiClassSerializationHelper.loadOrCreateClassByteMap(serializers, deserializers, new File(path));
+        BiMap<Class<?>, Byte> mapping = MultiClassSerializationHelper.loadOrCreateClassByteMap(buildDefaultSerializers(), buildDefaultDeserializers(), new File(path));
 
-        return new MultiClassSerializationHelper(serializers, deserializers, mapping);
+        return new MultiClassSerializationHelper(buildDefaultSerializers(), buildDefaultDeserializers(), mapping);
     }
 
     @Test
@@ -148,4 +167,48 @@ public class MultiClassSerializationHelperTest extends TestCase {
             Assert.assertArrayEquals(s1, secondHelper.serialize(test));
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMappingCreationThrowsExceptionIfMapsAreInvalid() throws Exception {
+        Map<Class<?>, Function<?, byte[]>> serializers = new HashMap<Class<?>, Function<?, byte[]>>();
+        serializers.put(String.class, new Function<String, byte[]>() {
+                    @Override
+                    public byte[] apply(String string) {
+                        return string.getBytes();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "String -> byte[]";
+                    }
+                }
+        );
+        Map<Class<?>, Function<byte[], ?>> deserializers = new HashMap<Class<?>, Function<byte[], ?>>();
+
+        MultiClassSerializationHelper.buildClassByteMap(serializers, deserializers);
+    }
+
+    @Test
+    public void testMappingCreationIsValid() throws Exception {
+
+        Map<Class<?>, Function<?, byte[]>> serializers = buildDefaultSerializers();
+        BiMap<Class<?>, Byte> mapping = MultiClassSerializationHelper.buildClassByteMap(serializers,buildDefaultDeserializers());
+
+        assertEquals(serializers.size(), mapping.size());
+
+        for(Class<?> clazz : serializers.keySet()) {
+            assertTrue(mapping.containsKey(clazz));
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testHelperCreationFailsWithInvalidMapping() throws Exception {
+        BiMap<Class<?>, Byte> mapping = HashBiMap.create(3);
+        mapping.put(BigInteger.class, (byte) 0);
+        mapping.put(Boolean.class, (byte)1);
+        mapping.put(Float.class, (byte)2);
+        new MultiClassSerializationHelper(buildDefaultSerializers(), buildDefaultDeserializers(), mapping);
+    }
+
+
 }
