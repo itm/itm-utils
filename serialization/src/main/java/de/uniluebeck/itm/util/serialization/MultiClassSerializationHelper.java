@@ -16,31 +16,31 @@ public class MultiClassSerializationHelper<T> {
     private static Logger log = LoggerFactory.
             getLogger(MultiClassSerializationHelper.class);
 
-    private Map<Class<?>, Function<?, byte[]>> serializers;
-    private Map<Byte, Function<byte[], ?>> deserializers;
-    private final BiMap<Class<?>, Byte> mapping;
+    private Map<Class<? extends T>, Function<? extends T, byte[]>> serializers;
+    private Map<Byte, Function<byte[], ? extends T>> deserializers;
+    private final BiMap<Class<? extends T>, Byte> mapping;
 
 
-    public MultiClassSerializationHelper(final Map<Class<?>, Function<?, byte[]>> serializers,
-                                         Map<Class<?>, Function<byte[], ?>> deserializers, final BiMap<Class<?>, Byte> classByteMap) throws IllegalArgumentException {
+    public MultiClassSerializationHelper(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
+                                         Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, final BiMap<Class<? extends T>, Byte> classByteMap) throws IllegalArgumentException {
         if (serializers.size() != deserializers.size() || serializers.size() != classByteMap.size()) {
             throw new IllegalArgumentException("serializer mapping, deserializer mapping and byte to class mapping must have the same size!");
         }
 
-        this.serializers = new HashMap<Class<?>, Function<?, byte[]>>(serializers.size());
-        this.deserializers = new HashMap<Byte, Function<byte[], ?>>(deserializers.size());
+        this.serializers = new HashMap<Class<? extends T>, Function<? extends T, byte[]>>(serializers.size());
+        this.deserializers = new HashMap<Byte, Function<byte[], ? extends T>>(deserializers.size());
         this.mapping = classByteMap;
 
-        for (Map.Entry<Class<?>, Byte> pairs : mapping.entrySet()) {
+        for (Map.Entry<Class<? extends T>, Byte> pairs : mapping.entrySet()) {
             // Adding serializer
-            Function<?, byte[]> serializer = serializers.get(pairs.getKey());
+            Function<? extends T, byte[]> serializer = serializers.get(pairs.getKey());
             if (serializer == null) {
                 throw new IllegalArgumentException("Not serializer found for class " + pairs.getKey().getName());
             }
             this.serializers.put(pairs.getKey(), serializer);
 
             // Adding deserializer
-            Function<byte[], ?> deserializer = deserializers.get(pairs.getKey());
+            Function<byte[], ? extends T> deserializer = deserializers.get(pairs.getKey());
             if (deserializer == null) {
                 throw new IllegalArgumentException("Not deserializer found for class " + pairs.getKey().getName());
             }
@@ -53,8 +53,8 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
-    public static BiMap<Class<?>, Byte> buildClassByteMap(final Map<Class<?>, Function<?, byte[]>> serializers,
-                                                       Map<Class<?>, Function<byte[], ?>> deserializers) throws IllegalArgumentException {
+    public static <T> BiMap<Class<? extends T>, Byte> buildClassByteMap(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
+                                                       Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers) throws IllegalArgumentException {
 
         if (serializers.size() != deserializers.size()) {
             throw new IllegalArgumentException("Size of serializers and deserializers must be equal!");
@@ -63,9 +63,9 @@ public class MultiClassSerializationHelper<T> {
             throw new IllegalArgumentException("serializers map or deserializers map is too big! Max size is " + MAX_NUMBER_OF_SERIALIZERS);
         }
 
-        BiMap<Class<?>, Byte> mapping = HashBiMap.create(serializers.size());
+        BiMap<Class<? extends T>, Byte> mapping = HashBiMap.create(serializers.size());
         Byte id = Byte.MIN_VALUE;
-        for (Class<?> clazz : serializers.keySet()) {
+        for (Class<? extends T> clazz : serializers.keySet()) {
             mapping.put(clazz, id);
             id = (byte) (id + 1);
         }
@@ -73,9 +73,9 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
-    public static BiMap<Class<?>, Byte> buildOrCreateClassByteMap(final Map<Class<?>, Function<?, byte[]>> serializers,
-                                                               Map<Class<?>, Function<byte[], ?>> deserializers, File mappingFile) throws IllegalArgumentException, IOException {
-        BiMap<Class<?>, Byte> mapping = null;
+    public static <T> BiMap<Class<? extends T>, Byte> loadOrCreateClassByteMap(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
+                                                                               Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IllegalArgumentException, IOException {
+        BiMap<Class<? extends T>, Byte> mapping = null;
         try {
             mapping = loadClassByteMap(mappingFile);
         } catch (Exception e) {
@@ -88,20 +88,20 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
-    public static <T> MultiClassSerializationHelper<T> buildHelperWithMappingFile(final Map<Class<?>, Function<?, byte[]>> serializers,
-                                                                           Map<Class<?>, Function<byte[], ?>> deserializers, File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
-        BiMap<Class<?>, Byte> map = loadClassByteMap(mappingFile);
+    public static <T> MultiClassSerializationHelper<T> buildHelperWithMappingFile(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
+                                                                           Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
+        BiMap<Class<? extends T>, Byte> map = loadClassByteMap(mappingFile);
         return new MultiClassSerializationHelper<T>(serializers, deserializers, map);
     }
 
-    public static BiMap<Class<?>, Byte> loadClassByteMap(File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
+    public static <T> BiMap<Class<? extends T>, Byte> loadClassByteMap(File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
         if (!mappingFile.exists()) {
             throw new FileNotFoundException("Can't load mapping from non existing file (" + mappingFile.getAbsolutePath() + ")");
         }
         if (mappingFile.isDirectory()) {
             throw new IllegalArgumentException("Mapping file must be a file and not a directory (" + mappingFile.getAbsolutePath() + ")");
         }
-        BiMap<Class<?>, Byte> mapping = HashBiMap.create();
+        BiMap<Class<? extends T>, Byte> mapping = HashBiMap.create();
 
         // Build mapping for existing types
         List<String> notFoundClasses = new ArrayList<String>();
@@ -117,7 +117,7 @@ public class MultiClassSerializationHelper<T> {
                 }
                 String className = components[0].trim();
                 try {
-                    Class<?> clazz = Class.forName(className);
+                    @SuppressWarnings("unchecked") Class<? extends T> clazz = (Class<T>) Class.forName(className);
                     mapping.put(clazz, Byte.parseByte(components[1]));
                 } catch (ClassNotFoundException e) {
                     notFoundClasses.add(className);
@@ -141,7 +141,7 @@ public class MultiClassSerializationHelper<T> {
         return mapping;
     }
 
-    public static void storeClassByteMap(File mappingFile, BiMap<Class<?>, Byte> mapping) throws IOException, IllegalArgumentException {
+    public static <T> void storeClassByteMap(File mappingFile, BiMap<Class<? extends T>, Byte> mapping) throws IOException, IllegalArgumentException {
         if (!mappingFile.exists() && !mappingFile.isDirectory()) {
             Files.createParentDirs(mappingFile);
             mappingFile.createNewFile();
@@ -153,9 +153,9 @@ public class MultiClassSerializationHelper<T> {
 
         BufferedWriter bw = null;
         bw = new BufferedWriter(new FileWriter(mappingFile));
-        Iterator<Map.Entry<Class<?>, Byte>> it = mapping.entrySet().iterator();
+        Iterator<Map.Entry<Class<? extends T>, Byte>> it = mapping.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<Class<?>, Byte> entry = it.next();
+            Map.Entry<Class<? extends T>, Byte> entry = it.next();
             bw.write(entry.getKey().getName() + "," + entry.getValue());
             if (it.hasNext()) {
                 bw.write("\n");
@@ -168,7 +168,7 @@ public class MultiClassSerializationHelper<T> {
         }
     }
 
-    public BiMap<Class<?>, Byte> getClassByteMapping() {
+    public BiMap<Class<? extends T>, Byte> getClassByteMapping() {
         return mapping;
     }
 
@@ -177,10 +177,10 @@ public class MultiClassSerializationHelper<T> {
         return serialize(object, c);
     }
 
-    public byte[] serialize(T object, final Class<T> type) throws NotSerializableException {
+    public byte[] serialize(T object, final Class<? extends T> type) throws NotSerializableException {
         try {
-            @SuppressWarnings("unchecked")Function<T, byte[]> serializer = (Function<T, byte[]>) serializers.get(type);
-            byte[] serialized = serializer.apply(object);
+            Function serializer = serializers.get(type);
+            @SuppressWarnings("unchecked") byte[] serialized = (byte[]) serializer.apply(object);
             byte typeByte = mapping.get(type);
             byte[] finalSerialization = new byte[serialized.length + 1];
             finalSerialization[0] = typeByte;
@@ -188,6 +188,8 @@ public class MultiClassSerializationHelper<T> {
             return finalSerialization;
         } catch (NullPointerException e) {
             throw new NotSerializableException("Can't find a serializer for type " + type.getName() + " or serialization failed!");
+        } catch (ClassCastException e) {
+            throw new NotSerializableException("Failed to apply serializer function to "+object);
         }
     }
 
@@ -196,7 +198,7 @@ public class MultiClassSerializationHelper<T> {
             throw new IllegalArgumentException("Can't deserialize empty byte array");
         }
 
-        @SuppressWarnings("unchecked")Function<byte[], T> deserializer = (Function<byte[], T>) deserializers.get(serialization[0]);
+       Function<byte[], ? extends T> deserializer = deserializers.get(serialization[0]);
         if (deserializer == null) {
             throw new IllegalArgumentException("The provided byte array is invalid. No matching serializer found!");
         }

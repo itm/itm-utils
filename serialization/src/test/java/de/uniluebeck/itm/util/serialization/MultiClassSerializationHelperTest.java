@@ -107,7 +107,7 @@ public class MultiClassSerializationHelperTest extends TestCase {
 
         String path = System.getProperty("java.io.tmpdir") + "/MultiClassSerializationHelper.mapping";
 
-        BiMap<Class<?>, Byte> mapping = MultiClassSerializationHelper.buildOrCreateClassByteMap(serializers, deserializers, new File(path));
+        BiMap<Class<?>, Byte> mapping = MultiClassSerializationHelper.loadOrCreateClassByteMap(serializers, deserializers, new File(path));
 
         return new MultiClassSerializationHelper(serializers, deserializers, mapping);
     }
