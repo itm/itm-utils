@@ -11,6 +11,15 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.*;
 
+/**
+ * This class provides the ability to serialize different classes into byte arrays and vice versa.
+ * <p/>
+ * Therefore it stores serializer and deserializer functions and a mapping between bytes and classes. Furthermore this class provides functions for persisting, loading and creating the bidirectional class-byte-mapping.
+ * The serialization format used by instances of this class are byte arrays containing the type byte as first entry.
+ *
+ * @param <T> The parent type of objects to be serialized by this helper
+ */
+
 public class MultiClassSerializationHelper<T> {
     public static final int MAX_NUMBER_OF_SERIALIZERS = (int) Byte.MAX_VALUE - (int) Byte.MIN_VALUE;
     private static Logger log = LoggerFactory.
@@ -21,6 +30,14 @@ public class MultiClassSerializationHelper<T> {
     private final BiMap<Class<? extends T>, Byte> mapping;
 
 
+    /**
+     * Constructor for a new serialization helper
+     *
+     * @param serializers   a map from classes to functions used to serialize objects of the given class type
+     * @param deserializers a map from classes to functions used to deserialize objects of the given class type
+     * @param classByteMap  a map specifying which object type is matched to which byte during serialization
+     * @throws IllegalArgumentException if <code>serializers</code>, <code>deserializers</code> and <code>classByteMap</code> did not have equal size or if a deserializer or serialzer cannot be found for a class in the <code>classByteMap</code>
+     */
     public MultiClassSerializationHelper(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
                                          Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, final BiMap<Class<? extends T>, Byte> classByteMap) throws IllegalArgumentException {
         if (serializers.size() != deserializers.size() || serializers.size() != classByteMap.size()) {
@@ -53,8 +70,23 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
+
+    /**
+     * This function builds a new class  byte mapping for the given serializers and deserializers
+     * <p/>
+     * <strong>Note: </strong> the returned map is not persisted by this method but you should persist it, if you'd like to deserialize serializations after a programm restart hence the serializers and deserializers may have a different order.
+     * <strong>Warning: </strong> multiple calls to this method may lead to different mappings.
+     *
+     * @param serializers
+     * @param deserializers
+     * @param <T>           the common parent type
+     * @return a bidirectional mapping between classes and bytes
+     * @throws IllegalArgumentException if <code>serializers.size()</code> and <code>deserializer.size()</code> differ or if these maps are bigger than <code>MAX_NUMBER_OF_SERIALIZERS</code>
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#storeClassByteMap(java.io.File, com.google.common.collect.BiMap)  for mapping persistance
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#loadClassByteMap(java.io.File) to get a persisted mapping from a file
+     */
     public static <T> BiMap<Class<? extends T>, Byte> buildClassByteMap(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
-                                                       Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers) throws IllegalArgumentException {
+                                                                        Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers) throws IllegalArgumentException {
 
         if (serializers.size() != deserializers.size()) {
             throw new IllegalArgumentException("Size of serializers and deserializers must be equal!");
@@ -73,6 +105,20 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
+    /**
+     * This methods loads the mapping from a file if it exists or creates a builds a new map and stores it at the file location otherwise.
+     *
+     * @param serializers
+     * @param deserializers
+     * @param mappingFile   the file used for mapping persistance
+     * @param <T>           the parent type
+     * @return the loaded mapping if existing, a newly created mapping otherwise
+     * @throws IllegalArgumentException if the file points to a directory
+     * @throws IOException              if another error occures while reading or writing the mapping file
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#buildClassByteMap(java.util.Map, java.util.Map)
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#storeClassByteMap(java.io.File, com.google.common.collect.BiMap)
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#loadClassByteMap(java.io.File)
+     */
     public static <T> BiMap<Class<? extends T>, Byte> loadOrCreateClassByteMap(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
                                                                                Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IllegalArgumentException, IOException {
         BiMap<Class<? extends T>, Byte> mapping = null;
@@ -88,11 +134,41 @@ public class MultiClassSerializationHelper<T> {
 
     }
 
+    /**
+     * This method creates an new MultiClassSerializationHelper after loading the class-byte-mapping from the specified file.
+     *
+     * @param serializers
+     * @param deserializers
+     * @param mappingFile   the file which contains the class-byte-mapping
+     * @param <T>           the parent type of objects serialized by this helper
+     * @return a new instance of this class
+     * @throws IOException              if an error occures while reading the mapping file
+     * @throws ClassNotFoundException   if one or multiple classes specified in the mapping file cannot be found while loading the map
+     * @throws IllegalArgumentException if the file points to a directory
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#loadClassByteMap(java.io.File)
+     */
+
     public static <T> MultiClassSerializationHelper<T> buildHelperWithMappingFile(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
-                                                                           Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
+                                                                                  Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
         BiMap<Class<? extends T>, Byte> map = loadClassByteMap(mappingFile);
         return new MultiClassSerializationHelper<T>(serializers, deserializers, map);
     }
+
+
+    /**
+     * Loading the class-byte-mapping from the provided file
+     * <p/>
+     * The file must be a simple text file containing one map entry per line. Class name and type byte are comma seperated (e.g. "java.lang.String,10")
+     *
+     * @param mappingFile the file containing the mapping
+     * @param <T>         the parent type
+     * @return the loaded class-byte-mapping
+     * @throws java.io.FileNotFoundException if the mapping file cannot be found
+     * @throws IOException                   if an error occurs while reading the mapping file
+     * @throws ClassNotFoundException        if the mapping file specifies one or many non existing class(es)
+     * @throws IllegalArgumentException      if the file points to a directory
+     * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#storeClassByteMap(java.io.File, com.google.common.collect.BiMap)
+     */
 
     public static <T> BiMap<Class<? extends T>, Byte> loadClassByteMap(File mappingFile) throws IOException, ClassNotFoundException, IllegalArgumentException {
         if (!mappingFile.exists()) {
@@ -141,6 +217,15 @@ public class MultiClassSerializationHelper<T> {
         return mapping;
     }
 
+    /**
+     * Writes the provided class-byte-mapping to the provided file
+     *
+     * @param mappingFile the mapping file
+     * @param mapping     the class-byte-map
+     * @param <T>         the common parent type of all classes in the mapping
+     * @throws IOException              if an error occurs while writing the mapping to the file
+     * @throws IllegalArgumentException if the mapping file is a directory
+     */
     public static <T> void storeClassByteMap(File mappingFile, BiMap<Class<? extends T>, Byte> mapping) throws IOException, IllegalArgumentException {
         if (!mappingFile.exists() && !mappingFile.isDirectory()) {
             Files.createParentDirs(mappingFile);
@@ -172,11 +257,30 @@ public class MultiClassSerializationHelper<T> {
         return mapping;
     }
 
+    /**
+     * Method for serializing an object.
+     * <p/>
+     * This method uses the objects getClass-method to get the serializer type
+     *
+     * @param object the object to serialize
+     * @return the serialization of the object
+     * @throws NotSerializableException if something went wrong during serialization
+     */
     public byte[] serialize(T object) throws NotSerializableException {
         @java.lang.SuppressWarnings("unchecked") Class<T> c = (Class<T>) object.getClass();
         return serialize(object, c);
     }
 
+    /**
+     * Method for serializing an object using a specific serializer type.
+     * <p/>
+     * This method is useful, if there exists a serializer for a super type which should be used here.
+     *
+     * @param object the object to serialize
+     * @param type   the serializer type to use
+     * @return the serialized version of the object
+     * @throws NotSerializableException if the serializer for the given <code>type</code> isn't able to serialize the object or if the serializer returns <code>null</code>.
+     */
     public byte[] serialize(T object, final Class<? extends T> type) throws NotSerializableException {
         try {
             Function serializer = serializers.get(type);
@@ -189,16 +293,25 @@ public class MultiClassSerializationHelper<T> {
         } catch (NullPointerException e) {
             throw new NotSerializableException("Can't find a serializer for type " + type.getName() + " or serialization failed!");
         } catch (ClassCastException e) {
-            throw new NotSerializableException("Failed to apply serializer function to "+object);
+            throw new NotSerializableException("Failed to apply serializer function to " + object);
         }
     }
 
+
+    /**
+     * Method for deserializing a byte array conforming to the serialization format used by this class (type byte|object serialization)
+     *
+     * @param serialization the serialization
+     *
+     * @return the deserialized version
+     * @throws IllegalArgumentException if no deserializer was found for the first byte (type byte) of the serialization or if the serialization is an empty array
+     */
     public T deserialize(byte[] serialization) throws IllegalArgumentException {
         if (serialization == null || serialization.length == 0) {
             throw new IllegalArgumentException("Can't deserialize empty byte array");
         }
 
-       Function<byte[], ? extends T> deserializer = deserializers.get(serialization[0]);
+        Function<byte[], ? extends T> deserializer = deserializers.get(serialization[0]);
         if (deserializer == null) {
             throw new IllegalArgumentException("The provided byte array is invalid. No matching serializer found!");
         }
