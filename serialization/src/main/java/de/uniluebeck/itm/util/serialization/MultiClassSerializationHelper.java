@@ -249,7 +249,7 @@ public class MultiClassSerializationHelper<T> {
         try {
             bw.close();
         } catch (IOException e) {
-            throw new IOException("Error while closing file. Persisted mapping file may be invalid!");
+            throw new IOException("Error while closing file. Persisted mapping file may be invalid!", e);
         }
     }
 
