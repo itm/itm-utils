@@ -14,10 +14,20 @@ import java.util.*;
 /**
  * This class provides the ability to serialize different classes into byte arrays and vice versa.
  * <p/>
- * Therefore it stores serializer and deserializer functions and a mapping between bytes and classes. Furthermore this class provides functions for persisting, loading and creating the bidirectional class-byte-mapping.
- * The serialization format used by instances of this class are byte arrays containing the type byte as first entry.
+ * The serialization of an object according to this helper is a byte array containing a type byte at the first position and the byte serialization of the object given by the serializer functions afterwards.
+ * <p/>
+ * Due to the fact, that the multiple map iterator uses may yield in different order of the contained values,
+ * it's not sufficient to generate the "type byte" <-> "class type" map at initialization time of this helper because previously serialized objects might not be deserializable any more. Hence the constructor of this class expects the mapping as a bidirectional map.
+ * Furthermore this class provides functions for persisting, loading and creating the bidirectional class-byte-mapping.
+ * <p/>
+ * So in general there are two possibilities of handling the map:
+ * <ol>
+ * <li>store and load it with the helper functions of this class</li>
+ * <li>hard code the byte map</li>
+ * </ol>
  *
- * @param <T> The parent type of objects to be serialized by this helper
+ * @param <T> The parent type of objects to be serialized by this helper can be provided if only subtypes of an application specific class type should be handled by this instance.
+ *           Otherwise <code>Object</code> should be used. This parameter simplifies usage of the serialize and deserialize methods
  */
 
 public class MultiClassSerializationHelper<T> {
@@ -302,7 +312,6 @@ public class MultiClassSerializationHelper<T> {
      * Method for deserializing a byte array conforming to the serialization format used by this class (type byte|object serialization)
      *
      * @param serialization the serialization
-     *
      * @return the deserialized version
      * @throws IllegalArgumentException if no deserializer was found for the first byte (type byte) of the serialization or if the serialization is an empty array
      */
