@@ -159,8 +159,32 @@ public class Logging {
 	 * 		Thrown if the file cannot be accessed properly
 	 */
 	public static void addFileAppender(String pathToFile) throws IOException {
-		final Appender appender = new FileAppender(new PatternLayout(Logging.DEFAULT_PATTERN_LAYOUT), pathToFile, true);
-		org.apache.log4j.Logger.getRootLogger().addAppender(appender);
+		AsyncAppender asyncAppender = new AsyncAppender();
+		asyncAppender.addAppender(new FileAppender(new PatternLayout(Logging.DEFAULT_PATTERN_LAYOUT), pathToFile, true));
+		org.apache.log4j.Logger.getRootLogger().addAppender(asyncAppender);
+	}
+
+	/**
+	 * Adds a new logger with a {@link FileAppender} to the logging configuration.
+	 * The logger will not forward any log messages to any {@link Appender} of the root logger
+	 * @param pathToFile
+	 * 		Path to the file used to store the logged messages
+	 * @param name
+	 *      Name to be used for the logging configuration's new logger
+	 * @param logLevel
+	 * 		Log level to set on the new logger logger
+	 * @throws IOException
+	 */
+	public static void addIndependentFileAppender(final String pathToFile,
+	                                              final String name,
+	                                              final LogLevel logLevel) throws IOException {
+		final Logger logger = Logger.getLogger(name);
+		logger.removeAllAppenders();
+		AsyncAppender asyncAppender = new AsyncAppender();
+		asyncAppender.addAppender(new RollingFileAppender(new PatternLayout(Logging.DEFAULT_PATTERN_LAYOUT), pathToFile, true));
+		logger.addAppender(asyncAppender);
+		logger.setLevel(LOG_LEVEL_MAP.get(logLevel));
+		logger.setAdditivity(false);
 	}
 
 	/**
