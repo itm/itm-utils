@@ -51,28 +51,48 @@ public class MultiClassSerializationHelper<T> {
      */
     public MultiClassSerializationHelper(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
                                          Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, final BiMap<Class<? extends T>, Byte> classByteMap) throws IllegalArgumentException {
-        if (serializers.size() != deserializers.size() || serializers.size() != classByteMap.size()) {
-            throw new IllegalArgumentException("serializer mapping, deserializer mapping and byte to class mapping must have the same size!");
+
+
+        if (classByteMap.size() > serializers.size() || classByteMap.size() > deserializers.size()) {
+            throw new IllegalArgumentException("There are fewer entries in the serializer or deserializer maps than in the classToByteMap. Please add a serializer and deserializer for each class listed in the mapping file.");
         }
 
         this.serializers = new HashMap<Class<? extends T>, Function<? extends T, byte[]>>(serializers.size());
         this.deserializers = new HashMap<Byte, Function<byte[], ? extends T>>(deserializers.size());
         this.mapping = classByteMap;
 
+        byte maxByte = Byte.MIN_VALUE;
+
         for (Map.Entry<Class<? extends T>, Byte> pairs : mapping.entrySet()) {
+            if (pairs.getValue() > maxByte) {
+                maxByte = pairs.getValue();
+            }
             // Adding serializer
-            Function<? extends T, byte[]> serializer = serializers.get(pairs.getKey());
+            Function<? extends T, byte[]> serializer = serializers.remove(pairs.getKey());
             if (serializer == null) {
-                throw new IllegalArgumentException("Not serializer found for class " + pairs.getKey().getName());
+                throw new IllegalArgumentException("No serializer found for class " + pairs.getKey().getName());
             }
             this.serializers.put(pairs.getKey(), serializer);
 
             // Adding deserializer
-            Function<byte[], ? extends T> deserializer = deserializers.get(pairs.getKey());
+            Function<byte[], ? extends T> deserializer = deserializers.remove(pairs.getKey());
             if (deserializer == null) {
-                throw new IllegalArgumentException("Not deserializer found for class " + pairs.getKey().getName());
+                throw new IllegalArgumentException("No deserializer found for class " + pairs.getKey().getName());
             }
             this.deserializers.put(pairs.getValue(), deserializer);
+        }
+
+        if (serializers.size() > 0 && deserializers.size() > 0 && serializers.size() == deserializers.size()) {
+            for (Map.Entry<Class<? extends T>, Function<? extends T, byte[]>> serializerEntry : serializers.entrySet()) {
+                Function<byte[], ? extends T> deserializer = deserializers.get(serializerEntry.getKey());
+                if (deserializer != null) {
+                    this.mapping.put(serializerEntry.getKey(), ++maxByte);
+                    this.serializers.put(serializerEntry.getKey(), serializerEntry.getValue());
+                    this.deserializers.put(maxByte, deserializer);
+                } else {
+                    throw new IllegalArgumentException("No deserializer found for class " + serializerEntry.getKey().getName());
+                }
+            }
         }
 
         if (this.serializers.size() != this.deserializers.size() || this.serializers.size() != this.mapping.size()) {
