@@ -46,9 +46,9 @@ public class ExecutorUtils {
 
 		List<Runnable> runnableList = executorService.shutdownNow();
 		for (Runnable runnable : runnableList) {
-			log.error("Failed to execute the following jobs for {} {} upon ExecutorService shutdown: {}", new Object[]{
+			log.error("Failed to execute the following jobs for {} {} upon ExecutorService shutdown: {}",
 					timeout, timeUnit.toString().toLowerCase(), runnable
-			});
+			);
 		}
 
 	}
