@@ -43,7 +43,8 @@
 		<module>propconf</module>
 		<module>scheduler</module>
 		<module>util</module>
-	</modules>
+        <module>serialization</module>
+    </modules>
 
 	<dependencyManagement>
 		<dependencies>
