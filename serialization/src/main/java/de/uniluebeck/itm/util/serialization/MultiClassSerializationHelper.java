@@ -27,7 +27,7 @@ import java.util.*;
  * </ol>
  *
  * @param <T> The parent type of objects to be serialized by this helper can be provided if only subtypes of an application specific class type should be handled by this instance.
- *           Otherwise <code>Object</code> should be used. This parameter simplifies usage of the serialize and deserialize methods
+ *            Otherwise <code>Object</code> should be used. This parameter simplifies usage of the serialize and deserialize methods
  */
 
 @SuppressWarnings({"UnusedDeclaration", "ResultOfMethodCallIgnored"})
@@ -108,7 +108,7 @@ public class MultiClassSerializationHelper<T> {
      * <strong>Note: </strong> the returned map is not persisted by this method but you should persist it, if you'd like to deserialize serializations after a program restart hence the serializers and deserializers may have a different order.
      * <strong>Warning: </strong> multiple calls to this method may lead to different mappings.
      *
-     * @param serializers map from class types to serializer functions able to serialize instances of the class.
+     * @param serializers   map from class types to serializer functions able to serialize instances of the class.
      * @param deserializers map from class types to deserializer functions able to deserialize byte arrays representing instances of the class.
      * @param <T>           the common parent type
      * @return a bidirectional mapping between classes and bytes
@@ -139,7 +139,7 @@ public class MultiClassSerializationHelper<T> {
     /**
      * This methods loads the mapping from a file if it exists or creates a builds a new map and stores it at the file location otherwise.
      *
-     * @param serializers map from class types to serializer functions able to serialize instances of the class.
+     * @param serializers   map from class types to serializer functions able to serialize instances of the class.
      * @param deserializers map from class types to deserializer functions able to deserialize byte arrays representing instances of the class.
      * @param mappingFile   the file used for mapping persistence
      * @param <T>           the parent type
@@ -169,7 +169,7 @@ public class MultiClassSerializationHelper<T> {
     /**
      * This method creates an new MultiClassSerializationHelper after loading the class-byte-mapping from the specified file.
      *
-     * @param serializers map from class types to serializer functions able to serialize instances of the class.
+     * @param serializers   map from class types to serializer functions able to serialize instances of the class.
      * @param deserializers map from class types to deserializer functions able to deserialize byte arrays representing instances of the class.
      * @param mappingFile   the file which contains the class-byte-mapping
      * @param <T>           the parent type of objects serialized by this helper
@@ -313,18 +313,25 @@ public class MultiClassSerializationHelper<T> {
      */
     public byte[] serialize(T object, final Class<? extends T> type) throws NotSerializableException {
         try {
+
+            if (!serializers.containsKey(type)) {
+                throw new NotSerializableException("Can't find a serializer for type " + type.getName());
+            }
+
             Function serializer = serializers.get(type);
             @SuppressWarnings("unchecked") byte[] serialized = (byte[]) serializer.apply(object);
-            byte typeByte = mapping.get(type);
-            byte[] finalSerialization = new byte[0];
-            if (serialized != null) {
-                finalSerialization = new byte[serialized.length + 1];
-                finalSerialization[0] = typeByte;
-                System.arraycopy(serialized, 0, finalSerialization, 1, serialized.length);
+
+            if (serialized == null) {
+                throw new RuntimeException("Serialization result for object " + object.toString() + " is null");
             }
+
+            byte typeByte = mapping.get(type);
+            byte[] finalSerialization = new byte[serialized.length + 1];
+            finalSerialization[0] = typeByte;
+            System.arraycopy(serialized, 0, finalSerialization, 1, serialized.length);
+
             return finalSerialization;
-        } catch (NullPointerException e) {
-            throw new NotSerializableException("Can't find a serializer for type " + type.getName() + " or serialization failed!");
+
         } catch (ClassCastException e) {
             throw new NotSerializableException("Failed to apply serializer function to " + object);
         }

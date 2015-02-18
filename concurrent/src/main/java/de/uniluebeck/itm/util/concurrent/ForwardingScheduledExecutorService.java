@@ -77,6 +77,7 @@ public class ForwardingScheduledExecutorService implements ScheduledExecutorServ
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <V> ScheduledFuture<V> schedule(final Callable<V> callable, final long delay, final TimeUnit unit) {
 		return scheduledExecutorService.schedule(new ForwardingCallable(callable), delay, unit);
 	}

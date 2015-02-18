@@ -25,6 +25,7 @@ public class ForkJoinHelper {
 	 * @return a {@link com.google.common.collect.BiMap} instance that maps the callable to the {@link
 	 *         java.util.concurrent.Future}s representing the result
 	 */
+	@SuppressWarnings("unchecked")
 	public static <V> BiMap<? extends Callable<V>, Future<V>> fork(
 			final Collection<? extends Callable<V>> callables,
 			final ExecutorService executorService) {
@@ -58,6 +59,7 @@ public class ForkJoinHelper {
 	 *
 	 * @return a map between the {@link Callable}s executed and the results of the execution
 	 */
+	@SuppressWarnings("unchecked")
 	public static <V> BiMap<Callable<V>, V> join(final BiMap<? extends Callable<V>, Future<V>> calledCallables,
 												 boolean omitFailures) {
 
@@ -66,7 +68,6 @@ public class ForkJoinHelper {
 		for (Map.Entry<? extends Callable<V>, Future<V>> entry : calledCallables.entrySet()) {
 
 			try {
-				//noinspection unchecked
 				map.put(entry.getKey(), entry.getValue().get());
 			} catch (Exception e) {
 				if (!omitFailures) {
@@ -75,7 +76,6 @@ public class ForkJoinHelper {
 			}
 		}
 
-		//noinspection unchecked
 		return map;
 	}
 

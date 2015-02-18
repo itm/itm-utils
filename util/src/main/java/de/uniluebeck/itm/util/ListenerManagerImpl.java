@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 @SuppressWarnings("unused")
 public class ListenerManagerImpl<T> implements ListenerManager<T> {
 
+	@SuppressWarnings("unchecked")
 	protected ImmutableList<T> listeners = (ImmutableList<T>) ImmutableList.builder().build();
 
 	@Override

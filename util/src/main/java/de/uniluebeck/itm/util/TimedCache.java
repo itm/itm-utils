@@ -52,13 +52,17 @@ public class TimedCache<K, V> implements Map<K, V> {
 	 * Constructs a {@link TimedCache} instance with a default timeout of 30 minutes.
 	 */
 	public TimedCache() {
-		this(Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("TimedCache-Thread %d").build()),
+		this(Executors.newSingleThreadScheduledExecutor(
+						new ThreadFactoryBuilder().setNameFormat("TimedCache-Thread %d").build()
+				),
 				DEFAULT_TIMEOUT, DEFAULT_TIME_UNIT
 		);
 	}
 
 	public TimedCache(int defaultTimeout, TimeUnit defaultTimeUnit) {
-		this(Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("TimedCache-Thread %d").build()),
+		this(Executors.newSingleThreadScheduledExecutor(
+						new ThreadFactoryBuilder().setNameFormat("TimedCache-Thread %d").build()
+				),
 				defaultTimeout, defaultTimeUnit
 		);
 	}
@@ -90,7 +94,7 @@ public class TimedCache<K, V> implements Map<K, V> {
 			if (listener != null && value != null) {
 				Tuple<Long, TimeUnit> timeout = listener.timeout((K) key, value);
 				if (timeout != null) {
-					put( (K) key, value, timeout.getFirst(), timeout.getSecond());
+					put((K) key, value, timeout.getFirst(), timeout.getSecond());
 				}
 			}
 
@@ -98,7 +102,8 @@ public class TimedCache<K, V> implements Map<K, V> {
 
 	}
 
-	private Map<K, ScheduledFuture<Void>> cleanupMap = new HashMap<K, ScheduledFuture<Void>>();
+	private Map<K, Tuple<Long, ScheduledFuture<Void>>> cleanupMap =
+			new HashMap<K, Tuple<Long, ScheduledFuture<Void>>>();
 
 	private Map<K, V> map = new HashMap<K, V>();
 
@@ -118,8 +123,23 @@ public class TimedCache<K, V> implements Map<K, V> {
 		return map.containsValue(value);
 	}
 
+	@SuppressWarnings("unchecked")
 	public synchronized V get(Object key) {
-		return map.get(key);
+		final V v = map.get(key);
+		// "touch" entry
+		if (v != null) {
+			touch((K) key);
+		}
+		return v;
+	}
+
+	public boolean touch(final K k) {
+		final V v = map.get(k);
+		if (v != null) {
+			put(k, v, cleanupMap.get(k).getFirst(), TimeUnit.MILLISECONDS);
+			return true;
+		}
+		return false;
 	}
 
 	public synchronized V put(K key, V value) {
@@ -132,10 +152,17 @@ public class TimedCache<K, V> implements Map<K, V> {
 		V v = map.put(key, value);
 
 		if (v != null) {
-			cleanupMap.remove(key).cancel(false);
+			cleanupMap.remove(key).getSecond().cancel(false);
 		}
 
-		cleanupMap.put(key, (ScheduledFuture<Void>) scheduler.schedule(new RemoveRunnable<K>(key), timeout, timeUnit));
+		final long timeoutMillis = timeUnit.toMicros(timeout);
+		cleanupMap.put(
+				key,
+				new Tuple<Long, ScheduledFuture<Void>>(
+						timeoutMillis,
+						(ScheduledFuture<Void>) scheduler.schedule(new RemoveRunnable<K>(key), timeout, timeUnit)
+				)
+		);
 
 		return v;
 
@@ -148,7 +175,7 @@ public class TimedCache<K, V> implements Map<K, V> {
 
 		if (value != null) {
 			//noinspection SuspiciousMethodCalls
-			cleanupMap.get(key).cancel(false);
+			cleanupMap.get(key).getSecond().cancel(false);
 		}
 
 		cleanupMap.remove(key);
@@ -163,8 +190,8 @@ public class TimedCache<K, V> implements Map<K, V> {
 	}
 
 	public synchronized void clear() {
-		for (ScheduledFuture<Void> future : cleanupMap.values()) {
-			future.cancel(false);
+		for (Tuple<Long, ScheduledFuture<Void>> future : cleanupMap.values()) {
+			future.getSecond().cancel(false);
 		}
 		cleanupMap.clear();
 		map.clear();
