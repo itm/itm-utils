@@ -146,17 +146,18 @@ public class MultiClassSerializationHelper<T> {
      * @return the loaded mapping if existing, a newly created mapping otherwise
      * @throws IllegalArgumentException if the file points to a directory
      * @throws IOException              if another error occurs while reading or writing the mapping file
+     * @throws java.lang.ClassNotFoundException if a class in the mapping file was not found
      * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#buildClassByteMap(java.util.Map, java.util.Map)
      * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#storeClassByteMap(java.io.File, com.google.common.collect.BiMap)
      * @see de.uniluebeck.itm.util.serialization.MultiClassSerializationHelper#loadClassByteMap(java.io.File)
      */
     public static <T> BiMap<Class<? extends T>, Byte> loadOrCreateClassByteMap(final Map<Class<? extends T>, Function<? extends T, byte[]>> serializers,
-                                                                               Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IllegalArgumentException, IOException {
+                                                                               Map<Class<? extends T>, Function<byte[], ? extends T>> deserializers, File mappingFile) throws IllegalArgumentException, IOException, ClassNotFoundException {
         BiMap<Class<? extends T>, Byte> mapping;
         try {
             mapping = loadClassByteMap(mappingFile);
-        } catch (Exception e) {
-            //failed to load mapping from file
+        } catch (FileNotFoundException e) {
+            //no serializer mapping exists yet
             mapping = buildClassByteMap(serializers, deserializers);
             storeClassByteMap(mappingFile, mapping);
         }
