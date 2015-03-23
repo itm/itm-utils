@@ -177,6 +177,27 @@
 		</dependencies>
 	</dependencyManagement>
 
+	<profiles>
+		<profile>
+			<id>pre-JDK8</id>
+			<activation>
+				<jdk>[,1.8)</jdk>
+			</activation>
+			<properties>
+				<javadoc.additionalparam></javadoc.additionalparam>
+			</properties>
+		</profile>
+		<profile>
+			<id>post-JDK8</id>
+			<activation>
+				<jdk>[1.8,)</jdk>
+			</activation>
+			<properties>
+				<javadoc.additionalparam>-Xdoclint:none</javadoc.additionalparam>
+			</properties>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -191,6 +212,14 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.1</version>
+				<configuration>
+					<additionalparam>${javadoc.additionalparam}</additionalparam>
 				</configuration>
 			</plugin>
 			<plugin>
