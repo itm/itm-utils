@@ -19,7 +19,7 @@
 			<artifactId>files</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.99soft.guice</groupId>
+			<groupId>com.github.danbim.rocoto</groupId>
 			<artifactId>rocoto</artifactId>
 		</dependency>
 		<dependency>
